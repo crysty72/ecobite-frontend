@@ -9,6 +9,8 @@ import DetalleProducto from './pages/DetalleProducto'
 import DetalleRestaurante from './pages/DetalleRestaurante'
 import Carrito from './pages/Carrito'
 import Login from './pages/Login'
+import Checkout from './pages/Checkout'
+import Confirmacion from './pages/Confirmacion'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
           <Route path="/producto/:id" element={<DetalleProducto />} />
           <Route path="/restaurante/:id" element={<DetalleRestaurante />} />
           <Route path="/carrito" element={<Carrito />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/login" element={<Login />} />
         </Routes>
       </Layout>
@@ -28,4 +32,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
