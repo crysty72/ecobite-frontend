@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import Layout from './components/Layout'
-
+import CO2Calculator from './components/CO2Calculator'
 import Home from './pages/Home'
 import Productos from './pages/Productos'
 import Restaurantes from './pages/Restaurantes'
@@ -26,7 +26,11 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/login" element={<Login />} />
-        </Routes>
+
+    <Route
+  path="/co2"
+  element={<CO2Calculator />}
+/>    </Routes>
       </Layout>
     </BrowserRouter>
   )
