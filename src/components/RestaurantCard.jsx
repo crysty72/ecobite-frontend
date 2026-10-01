@@ -1,3 +1,4 @@
+
 function RestaurantCard({
   name,
   description,
@@ -6,50 +7,66 @@ function RestaurantCard({
   badges = [],
 }) {
   return (
-    <article className="bg-white rounded-xl shadow-md overflow-hidden">
-      
+    <article className="bg-white rounded-2xl border border-eco-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+
       {/* Imagen */}
-      {image && (
+      {image ? (
         <img
           src={image}
           alt={name}
-          className="w-full h-48 object-cover"
+          className="w-full h-52 object-cover"
         />
+      ) : (
+        <div className="w-full h-52 bg-eco-50 flex items-center justify-center">
+          <span
+            className="text-5xl"
+            role="img"
+            aria-label="Restaurante"
+          >
+            🍽️
+          </span>
+        </div>
       )}
 
       {/* Información */}
-      <div className="p-4">
-        <h2 className="text-xl font-bold text-gray-800">
+      <div className="p-6">
+
+        <h2 className="font-coiny text-2xl text-eco-900">
           {name}
         </h2>
 
-        <p className="mt-2 text-gray-600">
+        <p className="mt-3 text-gray-600 leading-relaxed">
           {description}
         </p>
 
         {/* Calificación */}
         {rating !== undefined && (
-          <p className="mt-3 font-semibold text-amber-500">
+          <div className="mt-4 inline-flex items-center bg-amber-50 text-amber-600 px-3 py-1 rounded-full font-semibold">
             ⭐ {rating}
-          </p>
+          </div>
         )}
 
         {/* Badges sustentables */}
         {badges.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-4">
+
             {badges.map((badge, index) => (
               <span
                 key={index}
-                className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700"
+                className="px-3 py-1 text-sm rounded-full bg-eco-100 text-eco-700 font-semibold"
               >
                 🌱 {badge}
               </span>
             ))}
+
           </div>
         )}
+
       </div>
+
     </article>
   )
 }
 
 export default RestaurantCard
+

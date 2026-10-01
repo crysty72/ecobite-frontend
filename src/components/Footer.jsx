@@ -1,80 +1,117 @@
+import { Link } from "react-router-dom";
+
 function Footer() {
   return (
-    <footer className="bg-green-900 text-white mt-10">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <footer className="bg-eco-900 text-white mt-10">
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-14">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
 
           {/* Marca */}
           <div>
-            <h2 className="text-xl font-bold mb-2">
+            <Link
+              to="/"
+              className="inline-block font-coiny text-3xl text-white hover:text-eco-200 transition-colors mb-4"
+            >
               EcoBite 🌱
-            </h2>
+            </Link>
 
-            <p className="text-green-100">
+            <p className="text-eco-100 leading-relaxed max-w-sm">
               Delivery sustentable para una alimentación consciente.
+              Elegí, disfrutá y ayudá al planeta.
             </p>
           </div>
 
-          {/* Enlaces institucionales */}
+          {/* Navegación */}
           <div>
-            <h3 className="font-semibold mb-3">
-              Institucional
+            <h3 className="font-coiny text-xl mb-4">
+              Navegación
             </h3>
 
-            <ul className="space-y-2 text-green-100">
+            <ul className="space-y-3 text-eco-100">
               <li>
-                <a href="#" className="hover:text-white">
-                  Sobre EcoBite
-                </a>
+                <Link
+                  to="/"
+                  className="hover:text-white transition-colors"
+                >
+                  Inicio
+                </Link>
               </li>
 
               <li>
-                <a href="#" className="hover:text-white">
-                  Términos y condiciones
-                </a>
+                <Link
+                  to="/productos"
+                  className="hover:text-white transition-colors"
+                >
+                  Productos
+                </Link>
               </li>
 
               <li>
-                <a href="#" className="hover:text-white">
-                  Política de privacidad
-                </a>
+                <Link
+                  to="/restaurantes"
+                  className="hover:text-white transition-colors"
+                >
+                  Restaurantes
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  to="/carrito"
+                  className="hover:text-white transition-colors"
+                >
+                  🛒 Carrito
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Redes */}
+          {/* EcoBite */}
           <div>
-            <h3 className="font-semibold mb-3">
-              Seguinos
+            <h3 className="font-coiny text-xl mb-4">
+              EcoBite
             </h3>
 
-            <div className="flex gap-4 text-green-100">
-              <a href="#" className="hover:text-white">
-                Instagram
+            <p className="text-eco-100 leading-relaxed">
+              🌎 Cada elección cuenta.
+            </p>
+
+            <p className="text-eco-200 text-sm leading-relaxed mt-3">
+              Juntos podemos disfrutar de una alimentación más
+              consciente y reducir nuestro impacto ambiental.
+            </p>
+          </div>
+        </div>
+
+        {/* Separador */}
+        <div className="border-t border-eco-700 mt-10 pt-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm text-eco-100">
+            <p>
+              © 2026 EcoBite. Delivery sustentable.
+            </p>
+
+            <div className="flex gap-5">
+              <a
+                href="#"
+                className="hover:text-white transition-colors"
+              >
+                Privacidad
               </a>
 
-              <a href="#" className="hover:text-white">
-                Facebook
-              </a>
-
-              <a href="#" className="hover:text-white">
-                LinkedIn
+              <a
+                href="#"
+                className="hover:text-white transition-colors"
+              >
+                Términos
               </a>
             </div>
           </div>
-
-        </div>
-
-        <div className="border-t border-green-700 mt-8 pt-4 text-center text-green-100">
-          <p>
-            © 2026 EcoBite. Delivery sustentable.
-          </p>
         </div>
 
       </div>
     </footer>
-  )
+  );
 }
 
-export default Footer
+export default Footer;
