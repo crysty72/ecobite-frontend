@@ -1,12 +1,17 @@
+
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-function Login() {
+function Registro() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { registrar } = useAuth();
 
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
@@ -19,14 +24,21 @@ function Login() {
     setCargando(true);
 
     try {
-      await login(email, password);
+      await registrar({
+        rolId: 1,
+        nombre,
+        apellido,
+        email,
+        telefono,
+        password,
+      });
 
       navigate("/restaurantes");
     } catch (error) {
-      if (error.status === 401) {
-        setError("El correo o la contraseña son incorrectos.");
-      } else if (error.status === 400) {
-        setError(error.message || "Los datos ingresados no son válidos.");
+      if (error.status === 400) {
+        setError(
+          error.message || "Los datos ingresados no son válidos."
+        );
       } else {
         setError(
           "No se pudo conectar con el servidor. Verificá que el backend esté funcionando."
@@ -42,20 +54,58 @@ function Login() {
       <section className="w-full max-w-md">
         <div className="text-center mb-8">
           <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
-            🌱 Bienvenido a EcoBite
+            🌱 Unite a EcoBite
           </span>
 
           <h1 className="font-coiny text-4xl md:text-5xl text-eco-900 mb-4">
-            Iniciar sesión
+            Crear una cuenta
           </h1>
 
           <p className="text-gray-600">
-            Ingresá a tu cuenta para continuar.
+            Registrate para comenzar a disfrutar EcoBite.
           </p>
         </div>
 
         <div className="bg-white rounded-3xl border border-eco-100 shadow-sm p-6 md:p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label
+                htmlFor="nombre"
+                className="block font-bold text-gray-700 mb-2"
+              >
+                Nombre
+              </label>
+
+              <input
+                id="nombre"
+                type="text"
+                value={nombre}
+                onChange={(event) => setNombre(event.target.value)}
+                placeholder="Tu nombre"
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="apellido"
+                className="block font-bold text-gray-700 mb-2"
+              >
+                Apellido
+              </label>
+
+              <input
+                id="apellido"
+                type="text"
+                value={apellido}
+                onChange={(event) => setApellido(event.target.value)}
+                placeholder="Tu apellido"
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="email"
@@ -78,6 +128,24 @@ function Login() {
 
             <div>
               <label
+                htmlFor="telefono"
+                className="block font-bold text-gray-700 mb-2"
+              >
+                Teléfono
+              </label>
+
+              <input
+                id="telefono"
+                type="tel"
+                value={telefono}
+                onChange={(event) => setTelefono(event.target.value)}
+                placeholder="11 1234 5678"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
+              />
+            </div>
+
+            <div>
+              <label
                 htmlFor="password"
                 className="block font-bold text-gray-700 mb-2"
               >
@@ -92,7 +160,7 @@ function Login() {
                 placeholder="••••••••"
                 required
                 minLength={6}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
               />
 
@@ -115,21 +183,21 @@ function Login() {
               disabled={cargando}
               className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {cargando ? "Ingresando..." : "Iniciar sesión"}
+              {cargando ? "Registrando..." : "Crear cuenta"}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-eco-100 text-center">
             <p className="text-sm text-gray-500">
-              ¿Todavía no tenés una cuenta?
+              ¿Ya tenés una cuenta?
             </p>
 
             <button
               type="button"
-              onClick={() => navigate("/registro")}
+              onClick={() => navigate("/login")}
               className="mt-2 text-primary font-bold hover:text-eco-700 transition-colors"
             >
-              Crear una cuenta
+              Iniciar sesión
             </button>
           </div>
         </div>
@@ -138,4 +206,5 @@ function Login() {
   );
 }
 
-export default Login;
+export default Registro;
+

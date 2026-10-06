@@ -1,3 +1,5 @@
+
+
 import { useNavigate } from "react-router-dom";
 
 function ProductCard({
@@ -44,6 +46,9 @@ function ProductCard({
       "carrito",
       JSON.stringify(nuevoCarrito)
     );
+
+    // Avisar que el carrito cambió
+    window.dispatchEvent(new Event("carritoActualizado"));
 
     alert(`${name} fue agregado al carrito`);
   };
@@ -105,3 +110,4 @@ function ProductCard({
 }
 
 export default ProductCard;
+

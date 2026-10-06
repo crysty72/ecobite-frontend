@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import Layout from './components/Layout'
@@ -9,6 +10,7 @@ import DetalleProducto from './pages/DetalleProducto'
 import DetalleRestaurante from './pages/DetalleRestaurante'
 import Carrito from './pages/Carrito'
 import Login from './pages/Login'
+import Registro from './pages/Registro'
 import Checkout from './pages/Checkout'
 import Confirmacion from './pages/Confirmacion'
 
@@ -26,14 +28,13 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/login" element={<Login />} />
-
-    <Route
-  path="/co2"
-  element={<CO2Calculator />}
-/>    </Routes>
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/co2" element={<CO2Calculator />} />
+        </Routes>
       </Layout>
     </BrowserRouter>
   )
 }
 
-export default App;
+export default App
+

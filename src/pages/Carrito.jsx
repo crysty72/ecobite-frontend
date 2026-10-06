@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/Button";
@@ -23,6 +24,9 @@ function Carrito() {
   // Guardar automáticamente los cambios
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(productos));
+
+    // Avisar al Navbar que el carrito cambió
+    window.dispatchEvent(new Event("carritoActualizado"));
   }, [productos]);
 
   // Aumentar cantidad
@@ -32,7 +36,7 @@ function Carrito() {
         String(producto.id) === String(id)
           ? {
               ...producto,
-              cantidad: Number(producto.cantidad) + 1,
+              cantidad: Number(producto.cantidad || 0) + 1,
             }
           : producto
       )
@@ -47,12 +51,12 @@ function Carrito() {
           String(producto.id) === String(id)
             ? {
                 ...producto,
-                cantidad: Number(producto.cantidad) - 1,
+                cantidad: Number(producto.cantidad || 0) - 1,
               }
             : producto
         )
         .filter(
-          (producto) => Number(producto.cantidad) > 0
+          (producto) => Number(producto.cantidad || 0) > 0
         )
     );
   };
@@ -71,7 +75,17 @@ function Carrito() {
   const vaciarCarrito = () => {
     setProductos([]);
     localStorage.removeItem("carrito");
+
+    // Actualizar inmediatamente el contador
+    window.dispatchEvent(new Event("carritoActualizado"));
   };
+
+  // Cantidad total de unidades
+  const cantidadTotal = productos.reduce(
+    (total, producto) =>
+      total + Number(producto.cantidad || 0),
+    0
+  );
 
   // Calcular total
   const total = productos.reduce(
@@ -161,9 +175,7 @@ function Carrito() {
                       <button
                         type="button"
                         onClick={() =>
-                          disminuirCantidad(
-                            producto.id
-                          )
+                          disminuirCantidad(producto.id)
                         }
                         className="w-10 h-10 rounded-xl border-2 border-primary text-primary font-bold text-xl hover:bg-eco-50 transition-colors"
                         aria-label="Disminuir cantidad"
@@ -178,9 +190,7 @@ function Carrito() {
                       <button
                         type="button"
                         onClick={() =>
-                          aumentarCantidad(
-                            producto.id
-                          )
+                          aumentarCantidad(producto.id)
                         }
                         className="w-10 h-10 rounded-xl bg-primary text-white font-bold text-xl hover:bg-eco-700 transition-colors"
                         aria-label="Aumentar cantidad"
@@ -193,9 +203,7 @@ function Carrito() {
                     <button
                       type="button"
                       onClick={() =>
-                        eliminarProducto(
-                          producto.id
-                        )
+                        eliminarProducto(producto.id)
                       }
                       className="text-red-500 font-semibold hover:text-red-700 transition-colors"
                     >
@@ -226,7 +234,8 @@ function Carrito() {
 
                 <div className="flex justify-between text-gray-600 mb-3">
                   <span>Productos</span>
-                  <span>{productos.length}</span>
+
+                  <span>{cantidadTotal}</span>
                 </div>
 
                 <div className="border-t border-eco-200 pt-4 mt-4">
@@ -236,8 +245,7 @@ function Carrito() {
                     </span>
 
                     <span className="font-coiny text-2xl text-primary">
-                      $
-                      {total.toLocaleString("es-AR")}
+                      ${total.toLocaleString("es-AR")}
                     </span>
                   </div>
                 </div>
@@ -245,9 +253,7 @@ function Carrito() {
                 <div className="mt-6">
                   <Button
                     className="w-full"
-                    onClick={() =>
-                      navigate("/checkout")
-                    }
+                    onClick={() => navigate("/checkout")}
                   >
                     Continuar compra
                   </Button>
@@ -262,3 +268,4 @@ function Carrito() {
 }
 
 export default Carrito;
+

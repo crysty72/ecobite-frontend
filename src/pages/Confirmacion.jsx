@@ -1,7 +1,17 @@
+
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Confirmacion() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Limpiar el carrito después de confirmar la compra
+    localStorage.removeItem("carrito");
+
+    // Actualizar inmediatamente el contador del Navbar
+    window.dispatchEvent(new Event("carritoActualizado"));
+  }, []);
 
   return (
     <main className="bg-white min-h-screen">
@@ -69,3 +79,4 @@ function Confirmacion() {
 }
 
 export default Confirmacion;
+
