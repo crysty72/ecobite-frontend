@@ -1,20 +1,43 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { login as loginService, registrar as registrarService } from "../services/authService";
+
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  login as loginService,
+  registrar as registrarService,
+} from "../services/authService";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [token, setToken] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const usuarioGuardado = localStorage.getItem("ecobite-user");
-    const tokenGuardado = localStorage.getItem("ecobite-token");
+    try {
+      const usuarioGuardado = localStorage.getItem("ecobite-user");
+      const tokenGuardado = localStorage.getItem("ecobite-token");
 
-    if (usuarioGuardado && tokenGuardado) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUsuario(JSON.parse(usuarioGuardado));
-      setToken(tokenGuardado);
+      if (usuarioGuardado && tokenGuardado) {
+        const usuarioParseado = JSON.parse(usuarioGuardado);
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setUsuario(usuarioParseado);
+        setToken(tokenGuardado);
+      }
+    } catch (error) {
+      console.error("Error al recuperar la sesión:", error);
+
+      localStorage.removeItem("ecobite-user");
+      localStorage.removeItem("ecobite-token");
+    } finally {
+      setCargando(false);
     }
   }, []);
 
@@ -24,7 +47,10 @@ export function AuthProvider({ children }) {
     setUsuario(data.usuario);
     setToken(data.tokenAcceso);
 
-    localStorage.setItem("ecobite-user", JSON.stringify(data.usuario));
+    localStorage.setItem(
+      "ecobite-user",
+      JSON.stringify(data.usuario)
+    );
     localStorage.setItem("ecobite-token", data.tokenAcceso);
 
     return data;
@@ -36,7 +62,10 @@ export function AuthProvider({ children }) {
     setUsuario(data.usuario);
     setToken(data.tokenAcceso);
 
-    localStorage.setItem("ecobite-user", JSON.stringify(data.usuario));
+    localStorage.setItem(
+      "ecobite-user",
+      JSON.stringify(data.usuario)
+    );
     localStorage.setItem("ecobite-token", data.tokenAcceso);
 
     return data;
@@ -58,7 +87,8 @@ export function AuthProvider({ children }) {
         login,
         registrar,
         logout,
-        estaAutenticado: !!token,
+        estaAutenticado: Boolean(token && usuario),
+        cargando,
       }}
     >
       {children}

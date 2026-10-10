@@ -1,8 +1,13 @@
 
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+
+// Registro inicial de eventos para comprobarlos en la consola.
+const registrarEvento = (nombreEvento) => {
+  console.info("[EcoBite Analytics]", nombreEvento);
+};
 
 function Registro() {
   const navigate = useNavigate();
@@ -16,6 +21,11 @@ function Registro() {
 
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  // Evento 1: visita a la pantalla de registro.
+  useEffect(() => {
+    registrarEvento("vista_pantalla_registro");
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -33,11 +43,18 @@ function Registro() {
         password,
       });
 
+      // Evento 4: registro completado correctamente.
+      registrarEvento("exito_registro_cuenta");
+
       navigate("/restaurantes");
     } catch (error) {
       if (error.status === 400) {
         setError(
           error.message || "Los datos ingresados no son válidos."
+        );
+      } else if (error.status === 401) {
+        setError(
+          "No se pudo completar el registro. Verificá los datos ingresados."
         );
       } else {
         setError(
@@ -83,6 +100,7 @@ function Registro() {
                 onChange={(event) => setNombre(event.target.value)}
                 placeholder="Tu nombre"
                 required
+                autoComplete="given-name"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
               />
             </div>
@@ -102,6 +120,7 @@ function Registro() {
                 onChange={(event) => setApellido(event.target.value)}
                 placeholder="Tu apellido"
                 required
+                autoComplete="family-name"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
               />
             </div>
@@ -119,6 +138,9 @@ function Registro() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                onClick={() =>
+                  registrarEvento("click_campo_email_registro")
+                }
                 placeholder="tu@email.com"
                 required
                 autoComplete="email"
@@ -140,6 +162,7 @@ function Registro() {
                 value={telefono}
                 onChange={(event) => setTelefono(event.target.value)}
                 placeholder="11 1234 5678"
+                autoComplete="tel"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:border-primary focus:ring-2 focus:ring-eco-100"
               />
             </div>
@@ -180,6 +203,9 @@ function Registro() {
 
             <button
               type="submit"
+              onClick={() =>
+                registrarEvento("click_boton_crear_cuenta")
+              }
               disabled={cargando}
               className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -207,4 +233,3 @@ function Registro() {
 }
 
 export default Registro;
-

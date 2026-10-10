@@ -1,7 +1,10 @@
 
+
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import logoEcoBite from "../assets/Ecobite_Isologotipo_.png";
 
 function Navbar() {
   const { usuario, estaAutenticado, logout } = useAuth();
@@ -19,11 +22,13 @@ function Navbar() {
     try {
       const carrito = JSON.parse(carritoGuardado);
 
-      const cantidadTotal = carrito.reduce(
-        (total, producto) =>
-          total + Number(producto.cantidad || 0),
-        0
-      );
+      const cantidadTotal = Array.isArray(carrito)
+        ? carrito.reduce(
+            (total, producto) =>
+              total + Number(producto.cantidad || 0),
+            0
+          )
+        : 0;
 
       setCantidadCarrito(cantidadTotal);
     } catch (error) {
@@ -37,21 +42,11 @@ function Navbar() {
     actualizarCarrito();
 
     window.addEventListener("storage", actualizarCarrito);
-    window.addEventListener(
-      "carritoActualizado",
-      actualizarCarrito
-    );
+    window.addEventListener("carritoActualizado", actualizarCarrito);
 
     return () => {
-      window.removeEventListener(
-        "storage",
-        actualizarCarrito
-      );
-
-      window.removeEventListener(
-        "carritoActualizado",
-        actualizarCarrito
-      );
+      window.removeEventListener("storage", actualizarCarrito);
+      window.removeEventListener("carritoActualizado", actualizarCarrito);
     };
   }, []);
 
@@ -60,69 +55,59 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-eco-100 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <nav
+      className="sticky top-0 z-50 border-b border-eco-100 bg-white"
+      aria-label="Navegación principal"
+    >
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-          {/* LOGO */}
+          {/* LOGO ORIGINAL DE DISEÑO */}
           <Link
             to="/"
-            className="group flex items-center gap-3 w-fit"
+            className="group flex w-fit shrink-0 items-center"
             aria-label="EcoBite - Inicio"
           >
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-eco-50 group-hover:bg-eco-100 transition-colors">
-              <span
-                className="text-3xl"
-                role="img"
-                aria-hidden="true"
-              >
-                🌱
-              </span>
-            </div>
-
-            <div className="flex flex-col">
-              <span className="font-coiny text-3xl leading-none text-primary group-hover:text-eco-700 transition-colors">
-                EcoBite
-              </span>
-
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-eco-600 mt-1">
-                Comer · Cuidar · Conectar
-              </span>
-            </div>
+            <img
+              src={logoEcoBite}
+              alt="EcoBite"
+              className="h-14 w-auto max-w-[180px] object-contain transition-transform duration-200 group-hover:scale-105"
+            />
           </Link>
 
           {/* NAVEGACIÓN */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:justify-end md:gap-x-5">
 
             <Link
               to="/"
-              className="font-semibold text-gray-600 hover:text-primary transition-colors px-2 py-1"
+              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
             >
               Inicio
             </Link>
 
             <Link
               to="/productos"
-              className="font-semibold text-gray-600 hover:text-primary transition-colors px-2 py-1"
+              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
             >
               Productos
             </Link>
 
             <Link
               to="/restaurantes"
-              className="font-semibold text-gray-600 hover:text-primary transition-colors px-2 py-1"
+              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
             >
               Restaurantes
             </Link>
 
             <Link
               to="/carrito"
-              className="relative font-semibold text-gray-600 hover:text-primary transition-colors px-2 py-1"
+              className="relative rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              aria-label={`Carrito, ${cantidadCarrito} productos`}
             >
-              🛒 Carrito
+              <span aria-hidden="true">🛒</span> Carrito
 
               {cantidadCarrito > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-primary text-white text-xs font-bold">
+                <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-white">
                   {cantidadCarrito}
                 </span>
               )}
@@ -130,15 +115,15 @@ function Navbar() {
 
             {/* USUARIO AUTENTICADO */}
             {estaAutenticado ? (
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="font-semibold text-gray-700">
-                  👋 Hola, {usuario?.nombre}
+                  👋 Hola, {usuario?.nombre || "usuario"}
                 </span>
 
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="border border-primary text-primary px-4 py-2 rounded-xl font-bold hover:bg-eco-50 transition-colors"
+                  className="rounded-xl border border-primary px-4 py-2 font-bold text-primary transition-colors hover:bg-eco-50"
                 >
                   Cerrar sesión
                 </button>
@@ -146,7 +131,7 @@ function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold hover:bg-eco-700 transition-colors shadow-sm"
+                className="rounded-xl bg-primary px-5 py-2.5 font-bold text-white shadow-sm transition-colors hover:bg-eco-700"
               >
                 Iniciar sesión
               </Link>
@@ -159,5 +144,3 @@ function Navbar() {
 }
 
 export default Navbar;
-
-
