@@ -1,106 +1,123 @@
+
+
+import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
+import { getProductos } from "../services/productService";
 
 function Productos() {
-  const productos = [
-    {
-      id: 1,
-      name: "Ensalada fresca",
-      description:
-        "Una opción liviana preparada con ingredientes frescos.",
-      precio: 4500,
-    },
-    {
-      id: 2,
-      name: "Bowl saludable",
-      description:
-        "Combinación equilibrada de vegetales y alimentos naturales.",
-      precio: 5200,
-    },
-    {
-      id: 3,
-      name: "Wrap vegetal",
-      description:
-        "Una alternativa práctica, rica y consciente.",
-      precio: 4800,
-    },
-    {
-      id: 4,
-      name: "Plato del día",
-      description:
-        "Una propuesta casera elaborada con ingredientes seleccionados.",
-      precio: 5500,
-    },
-    {
-      id: 5,
-      name: "Smoothie natural",
-      description:
-        "Frutas frescas combinadas en una bebida nutritiva.",
-      precio: 3500,
-    },
-    {
-      id: 6,
-      name: "Postre saludable",
-      description:
-        "Una opción dulce para cerrar tu comida.",
-      precio: 3200,
-    },
-  ];
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarProductos() {
+      try {
+        setCargando(true);
+        setError("");
+
+        const data = await getProductos();
+
+        if (activo) {
+          setProductos(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error al cargar productos:", err);
+
+        if (activo) {
+          setError(
+            "No pudimos cargar los productos. Intentá nuevamente."
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    }
+
+    cargarProductos();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   return (
-    <main className="bg-white min-h-screen">
-
-      {/* ENCABEZADO */}
+    <main className="min-h-screen bg-white">
       <section className="bg-eco-50">
-        <div className="max-w-7xl mx-auto px-6 py-14 md:py-20">
-
-          <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
+        <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
+          <span className="mb-5 inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm">
             🥗 Opciones para elegir
           </span>
 
-          <h1 className="font-coiny text-4xl md:text-6xl text-eco-900 mb-5">
+          <h1 className="mb-5 font-coiny text-4xl text-eco-900 md:text-6xl">
             Productos
           </h1>
 
-          <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
+          <p className="max-w-2xl text-lg leading-relaxed text-gray-600">
             Explorá nuestra selección de productos y encontrá una
             opción que se adapte a vos.
           </p>
-
         </div>
       </section>
 
-      {/* CATÁLOGO */}
-      <section className="max-w-7xl mx-auto px-6 py-14 md:py-16">
-
+      <section className="mx-auto max-w-7xl px-6 py-14 md:py-16">
         <div className="mb-10">
-
           <h2 className="font-coiny text-3xl text-eco-900">
             Nuestro catálogo
           </h2>
 
-          <p className="text-gray-500 mt-2">
+          <p className="mt-2 text-gray-500">
             Elegí un producto para conocer más detalles o agregarlo
             directamente al carrito.
           </p>
-
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+        {cargando && (
+          <p className="text-gray-600" role="status">
+            Cargando productos...
+          </p>
+        )}
 
-          {productos.map((producto) => (
-            <ProductCard
-              key={producto.id}
-              id={producto.id}
-              name={producto.name}
-              description={producto.description}
-              precio={producto.precio}
-            />
-          ))}
+        {!cargando && error && (
+          <div className="py-10 text-center">
+            <p className="mb-4 text-red-600" role="alert">
+              {error}
+            </p>
 
-        </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-primary px-6 py-3 font-bold text-white hover:bg-eco-700"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
 
+        {!cargando && !error && productos.length === 0 && (
+          <p className="text-gray-600">
+            No hay productos disponibles por el momento.
+          </p>
+        )}
+
+        {!cargando && !error && productos.length > 0 && (
+          <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            {productos.map((producto) => (
+              <ProductCard
+                key={producto.id}
+                id={producto.id}
+                name={producto.nombre}
+                description={producto.descripcion}
+                precio={producto.precio}
+                restauranteId={producto.restauranteId}
+              />
+            ))}
+          </div>
+        )}
       </section>
-
     </main>
   );
 }

@@ -1,6 +1,4 @@
 
-
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -61,8 +59,7 @@ function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
-          {/* LOGO ORIGINAL DE DISEÑO */}
+          {/* LOGO */}
           <Link
             to="/"
             className="group flex w-fit shrink-0 items-center"
@@ -77,7 +74,6 @@ function Navbar() {
 
           {/* NAVEGACIÓN */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:justify-end md:gap-x-5">
-
             <Link
               to="/"
               className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
@@ -97,6 +93,14 @@ function Navbar() {
               className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
             >
               Restaurantes
+            </Link>
+
+            {/* NUEVO ENLACE: IMPACTO AMBIENTAL */}
+            <Link
+              to="/co2"
+              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+            >
+              🌱 Impacto ambiental
             </Link>
 
             <Link

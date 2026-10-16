@@ -1,216 +1,898 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+
+const API_URL = "http://localhost:3000/api/v1";
 
 function Checkout() {
   const navigate = useNavigate();
 
-  const [nombre, setNombre] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [metodoPago, setMetodoPago] = useState("tarjeta");
+  const {
+    usuario,
+    token,
+    estaAutenticado,
+    cargando: cargandoSesion,
+  } = useAuth();
 
-  const carrito = JSON.parse(
-    localStorage.getItem("carrito") || "[]"
+  const { carrito, clearCart, total } = useCart();
+
+  const [direcciones, setDirecciones] = useState([]);
+  const [transportes, setTransportes] = useState([]);
+  const [zonas, setZonas] = useState([]);
+
+  const [direccionId, setDireccionId] = useState("");
+  const [transporteId, setTransporteId] = useState("");
+  const [zonaId, setZonaId] = useState("");
+  const [distanciaKm, setDistanciaKm] = useState("");
+
+  const [cargandoDatos, setCargandoDatos] = useState(false);
+  const [cargandoZonas, setCargandoZonas] = useState(false);
+  const [reintentoZonas, setReintentoZonas] = useState(0);
+
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+  const [errorZonas, setErrorZonas] = useState("");
+
+  const [pedidoCreado, setPedidoCreado] = useState(null);
+  const [impacto, setImpacto] = useState(null);
+  const [avisoImpacto, setAvisoImpacto] = useState("");
+
+  const restaurantes = [
+    ...new Set(
+      carrito
+        .map((producto) => Number(producto.restauranteId))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    ),
+  ];
+
+  const zonaSeleccionada = zonas.find(
+    (zona) => String(zona.id) === String(zonaId)
   );
 
-  const total = carrito.reduce(
-    (acumulado, producto) =>
-      acumulado +
-      Number(producto.precio || 0) *
-        Number(producto.cantidad || 0),
-    0
-  );
-
-  const confirmarPedido = (event) => {
-    event.preventDefault();
-
-    if (!nombre.trim() || !direccion.trim()) {
-      alert("Completá tu nombre y dirección.");
+  useEffect(() => {
+    if (
+      cargandoSesion ||
+      !estaAutenticado ||
+      !usuario?.id ||
+      !token
+    ) {
       return;
     }
 
-    navigate("/confirmacion");
-  };
+    let cancelado = false;
 
-  return (
-    <main className="bg-white min-h-screen">
-      {/* Encabezado */}
-      <section className="bg-eco-50">
-        <div className="max-w-7xl mx-auto px-6 py-14 md:py-20">
-          <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
-            🛒 Finalizá tu compra
-          </span>
+    async function cargarDatos() {
+      setCargandoDatos(true);
+      setCargandoZonas(true);
+      setError("");
+      setErrorZonas("");
 
-          <h1 className="font-coiny text-4xl md:text-6xl text-eco-900 mb-5">
-            Checkout
+      try {
+        const opciones = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        };
+
+        const [
+          respuestaDirecciones,
+          respuestaTransportes,
+        ] = await Promise.all([
+          fetch(
+            `${API_URL}/direcciones/usuario/${usuario.id}`,
+            opciones
+          ),
+          fetch(`${API_URL}/tipos-transporte`, opciones),
+        ]);
+
+        if (!respuestaDirecciones.ok) {
+          throw new Error(
+            "No se pudieron cargar tus direcciones."
+          );
+        }
+
+        if (!respuestaTransportes.ok) {
+          throw new Error(
+            "No se pudieron cargar los medios de transporte."
+          );
+        }
+
+        const [
+          datosDirecciones,
+          datosTransportes,
+        ] = await Promise.all([
+          respuestaDirecciones.json(),
+          respuestaTransportes.json(),
+        ]);
+
+        if (cancelado) return;
+
+        const listaDirecciones = Array.isArray(datosDirecciones)
+          ? datosDirecciones
+          : [];
+
+        const listaTransportes = Array.isArray(datosTransportes)
+          ? datosTransportes
+          : [];
+
+        setDirecciones(listaDirecciones);
+        setTransportes(listaTransportes);
+
+        setDireccionId((actual) => {
+          if (
+            actual &&
+            listaDirecciones.some(
+              (direccion) => String(direccion.id) === actual
+            )
+          ) {
+            return actual;
+          }
+
+          return listaDirecciones.length
+            ? String(listaDirecciones[0].id)
+            : "";
+        });
+
+        const bicicleta = listaTransportes.find(
+          (transporte) =>
+            String(transporte.nombre).toLowerCase() ===
+            "bicicleta"
+        );
+
+        setTransporteId((actual) => {
+          if (
+            actual &&
+            listaTransportes.some(
+              (transporte) => String(transporte.id) === actual
+            )
+          ) {
+            return actual;
+          }
+
+          return bicicleta
+            ? String(bicicleta.id)
+            : listaTransportes.length
+              ? String(listaTransportes[0].id)
+              : "";
+        });
+      } catch (err) {
+        if (!cancelado) {
+          setError(
+            err.message ||
+              "No se pudieron cargar los datos de entrega."
+          );
+        }
+      } finally {
+        if (!cancelado) {
+          setCargandoDatos(false);
+        }
+      }
+
+      // Las zonas se cargan por separado para que un error
+      // en este servicio no oculte los demás datos del checkout.
+      try {
+        const respuestaZonas = await fetch(
+          `${API_URL}/zonas`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!respuestaZonas.ok) {
+          throw new Error(
+            "El servicio de zonas no está disponible."
+          );
+        }
+
+        const datosZonas = await respuestaZonas.json();
+
+        if (!Array.isArray(datosZonas)) {
+          throw new Error(
+            "El servicio de zonas devolvió una respuesta inválida."
+          );
+        }
+
+        if (cancelado) return;
+
+        const listaZonas = datosZonas.filter(
+          (zona) => zona.habilitada === true
+        );
+
+        setZonas(listaZonas);
+        setErrorZonas("");
+
+        setZonaId((actual) => {
+          if (
+            actual &&
+            listaZonas.some(
+              (zona) => String(zona.id) === actual
+            )
+          ) {
+            return actual;
+          }
+
+          return listaZonas.length
+            ? String(listaZonas[0].id)
+            : "";
+        });
+      } catch (err) {
+        if (!cancelado) {
+          setZonas([]);
+          setZonaId("");
+          setErrorZonas(
+            err.message ||
+              "No se pudieron cargar las zonas de entrega."
+          );
+        }
+      } finally {
+        if (!cancelado) {
+          setCargandoZonas(false);
+        }
+      }
+    }
+
+    cargarDatos();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    usuario?.id,
+    token,
+    estaAutenticado,
+    cargandoSesion,
+    reintentoZonas,
+  ]);
+
+  async function confirmarPedido(event) {
+    event.preventDefault();
+    setError("");
+    setAvisoImpacto("");
+
+    if (!estaAutenticado || !usuario?.id || !token) {
+      setError("Iniciá sesión para realizar tu pedido.");
+      return;
+    }
+
+    if (carrito.length === 0) {
+      setError("Tu carrito está vacío.");
+      return;
+    }
+
+    if (restaurantes.length !== 1) {
+      setError(
+        "Todos los productos del pedido deben pertenecer a un único restaurante. Revisá tu carrito."
+      );
+      return;
+    }
+
+    if (cargandoDatos || cargandoZonas) {
+      setError(
+        "Esperá a que terminen de cargar los datos de entrega."
+      );
+      return;
+    }
+
+    if (errorZonas) {
+      setError(
+        "No se pueden confirmar pedidos hasta que se carguen correctamente las zonas."
+      );
+      return;
+    }
+
+    if (!direccionId || !transporteId || !zonaId) {
+      setError(
+        "Seleccioná una dirección, un medio de transporte y una zona habilitada."
+      );
+      return;
+    }
+
+    const zonaValida = zonas.find(
+      (zona) =>
+        String(zona.id) === String(zonaId) &&
+        zona.habilitada === true
+    );
+
+    if (!zonaValida) {
+      setError(
+        "La zona seleccionada no está habilitada. Elegí otra zona."
+      );
+      return;
+    }
+
+    const distancia = Number(distanciaKm);
+
+    if (
+      distanciaKm.trim() === "" ||
+      !Number.isFinite(distancia) ||
+      distancia < 0
+    ) {
+      setError(
+        "Ingresá una distancia válida en kilómetros."
+      );
+      return;
+    }
+
+    const productoInvalido = carrito.find((producto) => {
+      const productoId = Number(producto.id);
+      const cantidad = Number(producto.cantidad);
+      const precio = Number(producto.precio);
+
+      return (
+        !Number.isInteger(productoId) ||
+        productoId <= 0 ||
+        !Number.isInteger(cantidad) ||
+        cantidad < 1 ||
+        !Number.isFinite(precio) ||
+        precio < 0
+      );
+    });
+
+    if (productoInvalido) {
+      const nombre =
+        productoInvalido.nombre ||
+        productoInvalido.name ||
+        "Producto sin nombre";
+
+      setError(
+        `El producto "${nombre}" no tiene un ID numérico válido. Los platos de ejemplo no se pueden confirmar como pedidos reales. Usá un producto del catálogo conectado al backend.`
+      );
+      return;
+    }
+
+    const items = carrito.map((producto) => ({
+      productoId: Number(producto.id),
+      cantidad: Number(producto.cantidad),
+    }));
+
+    setEnviando(true);
+
+    try {
+      const respuesta = await fetch(`${API_URL}/pedidos`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          clienteId: Number(usuario.id),
+          restauranteId: restaurantes[0],
+          direccionEntregaId: Number(direccionId),
+          tipoTransporteId: Number(transporteId),
+          zoneId: Number(zonaId),
+          distanciaKm: distancia,
+          items,
+        }),
+      });
+
+      const datosPedido = await respuesta
+        .json()
+        .catch(() => ({}));
+
+      if (!respuesta.ok) {
+        console.error("Error al crear el pedido:", {
+          status: respuesta.status,
+          respuesta: datosPedido,
+        });
+
+        const mensaje = Array.isArray(datosPedido.message)
+          ? datosPedido.message.join(" ")
+          : datosPedido.message;
+
+        throw new Error(
+          mensaje ||
+            `No se pudo crear el pedido (HTTP ${respuesta.status}).`
+        );
+      }
+
+      clearCart();
+      setPedidoCreado(datosPedido);
+
+      if (datosPedido.id != null) {
+        try {
+          const respuestaImpacto = await fetch(
+            `${API_URL}/impacto-ambiental/pedido/${datosPedido.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (respuestaImpacto.ok) {
+            const datosImpacto =
+              await respuestaImpacto.json();
+
+            setImpacto(datosImpacto);
+          } else {
+            setAvisoImpacto(
+              "El pedido se creó, pero no se pudo consultar su impacto ambiental."
+            );
+          }
+        } catch {
+          setAvisoImpacto(
+            "El pedido se creó, pero no se pudo consultar su impacto ambiental."
+          );
+        }
+      } else {
+        setAvisoImpacto(
+          "El pedido se creó, pero la respuesta no incluyó su identificador para consultar el impacto."
+        );
+      }
+    } catch (err) {
+      setError(
+        err.message || "Ocurrió un error al crear el pedido."
+      );
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  if (cargandoSesion) {
+    return (
+      <p className="p-6">Verificando tu sesión...</p>
+    );
+  }
+
+  if (!estaAutenticado) {
+    return (
+      <main className="mx-auto max-w-2xl p-6">
+        <h1 className="mb-4 text-2xl font-bold">
+          Finalizar compra
+        </h1>
+
+        <p className="mb-4">
+          Necesitás iniciar sesión para confirmar tu pedido.
+        </p>
+
+        <Link
+          to="/login"
+          className="inline-block rounded-lg bg-green-600 px-5 py-3 font-semibold text-white"
+        >
+          Iniciar sesión
+        </Link>
+      </main>
+    );
+  }
+
+  if (pedidoCreado) {
+    const kgTransporte =
+      impacto?.co2_ahorrado_transporte_kg;
+
+    const kgEmpaque =
+      impacto?.co2_ahorrado_empaque_kg;
+
+    const kgTotal =
+      impacto?.total_co2_ahorrado_kg;
+
+    return (
+      <main className="mx-auto max-w-2xl p-6">
+        <section className="rounded-2xl border border-green-200 bg-white p-6 shadow-sm">
+          <h1 className="mb-3 text-2xl font-bold text-green-700">
+            ¡Pedido creado correctamente!
           </h1>
 
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Completá tus datos para confirmar tu pedido.
-          </p>
-        </div>
-      </section>
+          {pedidoCreado.id != null && (
+            <p className="mb-2">
+              Número de pedido:{" "}
+              <strong>{pedidoCreado.id}</strong>
+            </p>
+          )}
 
-      {/* Contenido */}
-      <section className="max-w-7xl mx-auto px-6 py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Formulario */}
-          <div className="lg:col-span-2">
+          <p className="mb-4">
+            Total del pedido:{" "}
+            <strong>
+              $
+              {Number(
+                pedidoCreado.totalPrecio ?? total
+              ).toLocaleString("es-AR")}
+            </strong>
+          </p>
+
+          <p className="mb-4">
+            Zona de entrega:{" "}
+            <strong>
+              {pedidoCreado.zona?.nombre ||
+                zonaSeleccionada?.nombre ||
+                "Zona seleccionada"}
+            </strong>
+          </p>
+
+          {impacto && (
+            <section className="mb-5 rounded-xl bg-green-50 p-4">
+              <h2 className="mb-3 text-lg font-bold">
+                Impacto ambiental
+              </h2>
+
+              {kgTransporte != null && (
+                <p>
+                  Ahorro por transporte:{" "}
+                  <strong>
+                    {Number(kgTransporte).toFixed(4)} kg CO₂
+                  </strong>
+                </p>
+              )}
+
+              {kgEmpaque != null && (
+                <p>
+                  Ahorro por empaque:{" "}
+                  <strong>
+                    {Number(kgEmpaque).toFixed(4)} kg CO₂
+                  </strong>
+                </p>
+              )}
+
+              {kgTotal != null && (
+                <p className="mt-2 text-lg">
+                  Ahorro total:{" "}
+                  <strong>
+                    {Number(kgTotal).toFixed(4)} kg CO₂
+                  </strong>
+                </p>
+              )}
+
+              {kgTransporte == null &&
+                kgEmpaque == null &&
+                kgTotal == null && (
+                  <p>
+                    Se consultó el impacto ambiental, pero la
+                    respuesta no contiene valores de CO₂
+                    reconocidos por esta pantalla.
+                  </p>
+                )}
+            </section>
+          )}
+
+          {avisoImpacto && (
+            <p className="mb-4 text-amber-700">
+              {avisoImpacto}
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white"
+          >
+            Volver al inicio
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-6 text-3xl font-bold">
+        Finalizar compra
+      </h1>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
+      {carrito.length === 0 ? (
+        <section className="rounded-xl border p-6">
+          <p className="mb-4">Tu carrito está vacío.</p>
+
+          <Link
+            to="/productos"
+            className="font-semibold text-green-700"
+          >
+            Ver productos
+          </Link>
+        </section>
+      ) : (
+        <>
+          <section className="mb-6 rounded-xl border p-5">
+            <h2 className="mb-4 text-xl font-semibold">
+              Resumen del pedido
+            </h2>
+
+            <ul className="space-y-3">
+              {carrito.map((producto) => (
+                <li
+                  key={producto.id}
+                  className="flex justify-between gap-4"
+                >
+                  <span>
+                    {producto.nombre || producto.name} ×{" "}
+                    {producto.cantidad}
+                  </span>
+
+                  <span className="font-medium">
+                    $
+                    {(
+                      Number(producto.precio || 0) *
+                      Number(producto.cantidad || 0)
+                    ).toLocaleString("es-AR")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-5 border-t pt-4 text-xl font-bold">
+              Total: ${total.toLocaleString("es-AR")}
+            </p>
+          </section>
+
+          {cargandoDatos ? (
+            <p role="status">
+              Cargando direcciones y medios de transporte...
+            </p>
+          ) : (
             <form
               onSubmit={confirmarPedido}
-              className="bg-white border border-eco-100 rounded-2xl shadow-sm p-6 md:p-8"
+              className="space-y-5"
             >
-              <h2 className="font-coiny text-3xl text-eco-900 mb-8">
-                Datos de entrega
-              </h2>
+              <section className="rounded-xl border p-5">
+                <h2 className="mb-4 text-xl font-semibold">
+                  Datos de entrega
+                </h2>
 
-              <div className="space-y-6">
-                {/* Nombre */}
-                <div>
-                  <label
-                    htmlFor="nombre"
-                    className="block font-bold text-gray-700 mb-2"
-                  >
-                    Nombre completo
-                  </label>
-
-                  <input
-                    id="nombre"
-                    type="text"
-                    value={nombre}
-                    onChange={(event) =>
-                      setNombre(event.target.value)
-                    }
-                    placeholder="Ingresá tu nombre"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-eco-100"
-                  />
-                </div>
-
-                {/* Dirección */}
-                <div>
-                  <label
-                    htmlFor="direccion"
-                    className="block font-bold text-gray-700 mb-2"
-                  >
-                    Dirección
-                  </label>
-
-                  <input
-                    id="direccion"
-                    type="text"
-                    value={direccion}
-                    onChange={(event) =>
-                      setDireccion(event.target.value)
-                    }
-                    placeholder="Ingresá tu dirección"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-eco-100"
-                  />
-                </div>
-
-                {/* Método de pago */}
-                <div>
-                  <p className="font-bold text-gray-700 mb-3">
-                    Método de pago
-                  </p>
-
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 border border-eco-100 rounded-xl p-4 cursor-pointer hover:bg-eco-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="metodoPago"
-                        value="tarjeta"
-                        checked={metodoPago === "tarjeta"}
-                        onChange={(event) =>
-                          setMetodoPago(event.target.value)
-                        }
-                      />
-
-                      <span className="font-semibold text-gray-700">
-                        💳 Tarjeta
-                      </span>
-                    </label>
-
-                    <label className="flex items-center gap-3 border border-eco-100 rounded-xl p-4 cursor-pointer hover:bg-eco-50 transition-colors">
-                      <input
-                        type="radio"
-                        name="metodoPago"
-                        value="efectivo"
-                        checked={metodoPago === "efectivo"}
-                        onChange={(event) =>
-                          setMetodoPago(event.target.value)
-                        }
-                      />
-
-                      <span className="font-semibold text-gray-700">
-                        💵 Efectivo
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Botón */}
-                <button
-                  type="submit"
-                  className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors"
+                <label
+                  htmlFor="direccion"
+                  className="mb-2 block font-medium"
                 >
-                  Confirmar pedido
-                </button>
-              </div>
-            </form>
-          </div>
+                  Dirección guardada
+                </label>
 
-          {/* Resumen */}
-          <aside>
-            <div className="bg-eco-50 rounded-2xl p-6 sticky top-24">
-              <h2 className="font-coiny text-2xl text-eco-900 mb-6">
-                Resumen del pedido
-              </h2>
+                <select
+                  id="direccion"
+                  value={direccionId}
+                  onChange={(event) =>
+                    setDireccionId(event.target.value)
+                  }
+                  required
+                  className="mb-4 w-full rounded-lg border p-3"
+                >
+                  <option value="">
+                    Seleccioná una dirección
+                  </option>
 
-              {carrito.length === 0 ? (
-                <p className="text-gray-500">
-                  No hay productos en el carrito.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {carrito.map((producto) => (
-                    <div
-                      key={String(producto.id)}
-                      className="flex justify-between gap-4"
+                  {direcciones.map((direccion) => (
+                    <option
+                      key={direccion.id}
+                      value={direccion.id}
                     >
-                      <div>
-                        <p className="font-bold text-gray-700">
-                          {producto.nombre || producto.name}
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          Cantidad: {producto.cantidad}
-                        </p>
-                      </div>
-
-                      <span className="font-semibold text-primary">
-                        $
-                        {(
-                          Number(producto.precio || 0) *
-                          Number(producto.cantidad || 0)
-                        ).toLocaleString("es-AR")}
-                      </span>
-                    </div>
+                      {direccion.calle} {direccion.numero},{" "}
+                      {direccion.ciudad} (
+                      {direccion.codigoPostal})
+                    </option>
                   ))}
+                </select>
 
-                  <div className="border-t border-eco-200 pt-4 mt-4 flex justify-between items-center">
-                    <span className="font-bold text-gray-700">
-                      Total
-                    </span>
+                {direcciones.length === 0 && (
+                  <p className="mb-4 text-sm text-amber-700">
+                    No tenés direcciones guardadas. Necesitás
+                    registrar una dirección antes de continuar.
+                  </p>
+                )}
 
-                    <span className="font-coiny text-2xl text-primary">
-                      ${total.toLocaleString("es-AR")}
-                    </span>
+                <label
+                  htmlFor="zona"
+                  className="mb-2 block font-medium"
+                >
+                  Zona de entrega sustentable
+                </label>
+
+                {cargandoZonas ? (
+                  <p
+                    role="status"
+                    className="mb-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
+                  >
+                    Cargando zonas de entrega...
+                  </p>
+                ) : errorZonas ? (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4"
+                  >
+                    <p className="mb-3 text-sm text-red-700">
+                      {errorZonas}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setReintentoZonas((valor) => valor + 1)
+                      }
+                      className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                    >
+                      Reintentar carga de zonas
+                    </button>
                   </div>
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
-      </section>
+                ) : zonas.length === 0 ? (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="mb-3 text-sm text-amber-800">
+                      No hay zonas habilitadas disponibles.
+                      Cuando se habilite una zona, podrás
+                      seleccionarla para continuar.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setReintentoZonas((valor) => valor + 1)
+                      }
+                      className="rounded-lg border border-amber-600 px-4 py-2 font-semibold text-amber-800 hover:bg-amber-100"
+                    >
+                      Actualizar zonas
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      id="zona"
+                      value={zonaId}
+                      onChange={(event) =>
+                        setZonaId(event.target.value)
+                      }
+                      required
+                      className="mb-2 w-full rounded-lg border p-3"
+                    >
+                      <option value="">
+                        Seleccioná una zona habilitada
+                      </option>
+
+                      {zonas.map((zona) => (
+                        <option
+                          key={zona.id}
+                          value={zona.id}
+                        >
+                          {zona.nombre} — distancia media:{" "}
+                          {zona.distanciaMediaKm} km
+                        </option>
+                      ))}
+                    </select>
+
+                    <p className="mb-4 text-sm text-gray-600">
+                      Elegí una zona habilitada para tu entrega.
+                    </p>
+
+                    <section className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4">
+                      <h3 className="mb-3 font-semibold text-green-800">
+                        Información de la zona seleccionada
+                      </h3>
+
+                      {zonaSeleccionada ? (
+                        <div className="space-y-2 text-sm text-gray-700">
+                          <p>
+                            <span className="font-medium">
+                              Zona:
+                            </span>{" "}
+                            {zonaSeleccionada.nombre}
+                          </p>
+
+                          <p>
+                            <span className="font-medium">
+                              Distancia media:
+                            </span>{" "}
+                            {zonaSeleccionada.distanciaMediaKm} km
+                          </p>
+
+                          <p>
+                            <span className="font-medium">
+                              Estado:
+                            </span>{" "}
+                            <span className="font-semibold text-green-700">
+                              Habilitada
+                            </span>
+                          </p>
+
+                          {zonaSeleccionada.factorEmisionCo2 != null && (
+                            <p>
+                              <span className="font-medium">
+                                Factor de emisión de CO₂:
+                              </span>{" "}
+                              {zonaSeleccionada.factorEmisionCo2}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-600">
+                          Seleccioná una zona para consultar sus datos.
+                        </p>
+                      )}
+                    </section>
+                  </>
+                )}
+
+                <label
+                  htmlFor="transporte"
+                  className="mb-2 block font-medium"
+                >
+                  Medio de transporte
+                </label>
+
+                <select
+                  id="transporte"
+                  value={transporteId}
+                  onChange={(event) =>
+                    setTransporteId(event.target.value)
+                  }
+                  required
+                  className="mb-4 w-full rounded-lg border p-3"
+                >
+                  <option value="">
+                    Seleccioná el transporte
+                  </option>
+
+                  {transportes.map((transporte) => (
+                    <option
+                      key={transporte.id}
+                      value={transporte.id}
+                    >
+                      {String(transporte.nombre).toLowerCase() ===
+                      "vehiculo_electrico"
+                        ? "Vehículo eléctrico"
+                        : transporte.nombre}
+                    </option>
+                  ))}
+                </select>
+
+                <label
+                  htmlFor="distancia"
+                  className="mb-2 block font-medium"
+                >
+                  Distancia de entrega (km)
+                </label>
+
+                <input
+                  id="distancia"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={distanciaKm}
+                  onChange={(event) =>
+                    setDistanciaKm(event.target.value)
+                  }
+                  placeholder="Ingresá la distancia en kilómetros"
+                  required
+                  className="w-full rounded-lg border p-3"
+                />
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Ingresá la distancia de entrega que
+                  corresponda al pedido. No se calcula
+                  automáticamente.
+                </p>
+              </section>
+
+              <button
+                type="submit"
+                disabled={
+                  enviando ||
+                  cargandoDatos ||
+                  cargandoZonas ||
+                  Boolean(errorZonas) ||
+                  carrito.length === 0 ||
+                  direcciones.length === 0 ||
+                  transportes.length === 0 ||
+                  zonas.length === 0
+                }
+                className="w-full rounded-lg bg-green-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {enviando
+                  ? "Creando pedido..."
+                  : "Confirmar pedido"}
+              </button>
+            </form>
+          )}
+        </>
+      )}
     </main>
   );
 }

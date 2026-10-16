@@ -1,51 +1,28 @@
+
+import { useCart } from "../context/CartContext";
+
 function DishCard({
   id,
   name,
   description,
   price,
+  restauranteId,
 }) {
+  const { addToCart } = useCart();
+
   const agregarAlCarrito = () => {
-    const carritoActual =
-      JSON.parse(localStorage.getItem("carrito")) || [];
-
-    const productoExistente = carritoActual.find(
-      (producto) => String(producto.id) === String(id)
-    );
-
-    let nuevoCarrito;
-
-    if (productoExistente) {
-      nuevoCarrito = carritoActual.map((producto) =>
-        String(producto.id) === String(id)
-          ? {
-              ...producto,
-              cantidad: Number(producto.cantidad) + 1,
-            }
-          : producto
-      );
-    } else {
-      nuevoCarrito = [
-        ...carritoActual,
-        {
-          id,
-          nombre: name,
-          precio: price,
-          cantidad: 1,
-        },
-      ];
-    }
-
-    localStorage.setItem(
-      "carrito",
-      JSON.stringify(nuevoCarrito)
-    );
+    addToCart({
+      id,
+      nombre: name,
+      precio: Number(price),
+      restauranteId: Number(restauranteId),
+    });
 
     alert(`${name} fue agregado al carrito`);
   };
 
   return (
     <article className="bg-white rounded-2xl border border-eco-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* Imagen */}
       <div className="w-full h-52 bg-eco-50 flex items-center justify-center">
         <span
           className="text-6xl"
@@ -56,7 +33,6 @@ function DishCard({
         </span>
       </div>
 
-      {/* Información */}
       <div className="p-6">
         <h3 className="font-coiny text-2xl text-eco-900">
           {name}

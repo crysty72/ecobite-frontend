@@ -1,62 +1,29 @@
-
-
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 function ProductCard({
   id,
   name,
   description,
   precio,
+  restauranteId,
 }) {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const agregarAlCarrito = () => {
-    const carritoActual = JSON.parse(
-      localStorage.getItem("carrito") || "[]"
-    );
-
-    const productoExistente = carritoActual.find(
-      (producto) => Number(producto.id) === Number(id)
-    );
-
-    let nuevoCarrito;
-
-    if (productoExistente) {
-      nuevoCarrito = carritoActual.map((producto) =>
-        Number(producto.id) === Number(id)
-          ? {
-              ...producto,
-              cantidad: Number(producto.cantidad) + 1,
-            }
-          : producto
-      );
-    } else {
-      nuevoCarrito = [
-        ...carritoActual,
-        {
-          id,
-          nombre: name,
-          precio,
-          cantidad: 1,
-        },
-      ];
-    }
-
-    localStorage.setItem(
-      "carrito",
-      JSON.stringify(nuevoCarrito)
-    );
-
-    // Avisar que el carrito cambió
-    window.dispatchEvent(new Event("carritoActualizado"));
+    addToCart({
+      id,
+      nombre: name,
+      precio: Number(precio),
+      restauranteId,
+    });
 
     alert(`${name} fue agregado al carrito`);
   };
 
   return (
     <article className="bg-white rounded-2xl border border-eco-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-
-      {/* Imagen */}
       <div className="h-48 bg-eco-50 flex items-center justify-center">
         <span
           className="text-5xl"
@@ -67,9 +34,7 @@ function ProductCard({
         </span>
       </div>
 
-      {/* Información */}
       <div className="p-6">
-
         <h2 className="font-coiny text-2xl text-eco-900">
           {name}
         </h2>
@@ -82,9 +47,7 @@ function ProductCard({
           ${precio}
         </p>
 
-        {/* Acciones */}
         <div className="mt-6 flex flex-col gap-3">
-
           <button
             type="button"
             onClick={() => navigate(`/producto/${id}`)}
@@ -100,14 +63,10 @@ function ProductCard({
           >
             Agregar al carrito
           </button>
-
         </div>
-
       </div>
-
     </article>
   );
 }
 
 export default ProductCard;
-

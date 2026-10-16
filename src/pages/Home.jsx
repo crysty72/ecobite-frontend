@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom'
 
 function Home() {
@@ -8,9 +7,7 @@ function Home() {
       {/* HERO */}
       <section className="bg-eco-50">
         <div className="max-w-7xl mx-auto px-6 py-16 md:py-24">
-
           <div className="max-w-3xl">
-
             <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-6">
               🌱 Delivery sustentable
             </span>
@@ -28,7 +25,6 @@ function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-
               <Link
                 to="/restaurantes"
                 className="inline-flex justify-center items-center bg-primary text-white px-7 py-3.5 rounded-xl font-bold hover:bg-eco-700 transition-colors shadow-sm"
@@ -42,19 +38,14 @@ function Home() {
               >
                 Explorar productos
               </Link>
-
             </div>
-
           </div>
-
         </div>
       </section>
 
       {/* BENEFICIOS */}
       <section className="max-w-7xl mx-auto px-6 py-16 md:py-20">
-
         <div className="text-center mb-12">
-
           <h2 className="font-coiny text-3xl md:text-4xl text-eco-900 mb-3">
             Elegí EcoBite
           </h2>
@@ -63,68 +54,107 @@ function Home() {
             Una forma simple de disfrutar tus comidas y generar un impacto
             positivo.
           </p>
-
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
           <article className="bg-white rounded-2xl p-7 border border-eco-100 shadow-sm hover:shadow-md transition-shadow">
-
             <div className="w-14 h-14 flex items-center justify-center bg-eco-100 rounded-2xl text-3xl mb-5">
               🥗
             </div>
-
             <h3 className="text-xl font-bold text-eco-900 mb-2">
               Comida rica
             </h3>
-
             <p className="text-gray-600 leading-relaxed">
               Encontrá opciones variadas para disfrutar todos los días.
             </p>
-
           </article>
 
           <article className="bg-white rounded-2xl p-7 border border-eco-100 shadow-sm hover:shadow-md transition-shadow">
-
             <div className="w-14 h-14 flex items-center justify-center bg-eco-100 rounded-2xl text-3xl mb-5">
               🌱
             </div>
-
             <h3 className="text-xl font-bold text-eco-900 mb-2">
               Elecciones sustentables
             </h3>
-
             <p className="text-gray-600 leading-relaxed">
               Elegí alternativas que buscan reducir el impacto ambiental.
             </p>
-
           </article>
 
           <article className="bg-white rounded-2xl p-7 border border-eco-100 shadow-sm hover:shadow-md transition-shadow">
-
             <div className="w-14 h-14 flex items-center justify-center bg-eco-100 rounded-2xl text-3xl mb-5">
               🚴
             </div>
-
             <h3 className="text-xl font-bold text-eco-900 mb-2">
               Delivery simple
             </h3>
-
             <p className="text-gray-600 leading-relaxed">
               Explorá, elegí tus productos y realizá tu pedido fácilmente.
             </p>
-
           </article>
-
         </div>
-
       </section>
 
-      {/* CTA */}
+      {/* NUEVA SECCIÓN: IMPACTO AMBIENTAL */}
+      <section className="bg-eco-50 border-y border-eco-100">
+        <div className="max-w-7xl mx-auto px-6 py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+
+            <div>
+              <span className="inline-flex items-center bg-white text-primary px-4 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
+                🌍 Nuestro compromiso
+              </span>
+
+              <h2 className="font-coiny text-3xl md:text-5xl text-eco-900 leading-tight mb-5">
+                Cada elección cuenta.
+                <span className="block text-primary">
+                  Cada pedido importa.
+                </span>
+              </h2>
+
+              <p className="text-gray-600 text-lg leading-relaxed mb-7">
+                Descubrí cómo las alternativas de transporte y empaque
+                pueden contribuir a reducir la huella de carbono de tus pedidos.
+              </p>
+
+              <Link
+                to="/co2"
+                className="inline-flex justify-center items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl font-bold hover:bg-eco-700 transition-colors shadow-sm"
+              >
+                Conocé tu impacto
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-eco-100 shadow-sm p-8 md:p-10">
+              <div className="text-5xl mb-5" aria-hidden="true">
+                🌱
+              </div>
+
+              <h3 className="font-coiny text-2xl md:text-3xl text-eco-900 mb-3">
+                Un futuro más sustentable
+              </h3>
+
+              <p className="text-gray-600 leading-relaxed mb-6">
+                En EcoBite creemos que pequeñas decisiones pueden ayudar
+                a construir hábitos de consumo más responsables.
+              </p>
+
+              <div className="flex items-center gap-3 border-t border-eco-100 pt-5">
+                <span className="text-2xl" aria-hidden="true">♻️</span>
+                <p className="text-sm font-semibold text-eco-800">
+                  Menos desperdicio, más conciencia ambiental.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
       <section className="bg-eco-800">
-
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-
           <h2 className="font-coiny text-3xl md:text-4xl text-white mb-4">
             Empezá a descubrir EcoBite
           </h2>
@@ -139,9 +169,7 @@ function Home() {
           >
             Explorar restaurantes
           </Link>
-
         </div>
-
       </section>
 
     </main>
@@ -149,4 +177,3 @@ function Home() {
 }
 
 export default Home
-

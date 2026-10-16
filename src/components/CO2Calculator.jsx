@@ -8,26 +8,58 @@ function CO2Calculator() {
   });
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">
-        Impacto ambiental
-      </h2>
+    <section className="mx-auto w-full max-w-3xl p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-green-700">
+          Tu impacto ambiental 🌱
+        </h2>
 
-      <p>
-        CO₂ ahorrado por transporte:{" "}
-        {resultado.co2_ahorrado_transporte_kg} kg
-      </p>
+        <p className="mt-2 text-gray-600">
+          Con EcoBite, cada elección puede ayudar a cuidar el planeta.
+        </p>
+      </div>
 
-      <p>
-        CO₂ ahorrado por empaque:{" "}
-        {resultado.co2_ahorrado_empaque_kg} kg
-      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <article className="rounded-xl border border-green-100 bg-green-50 p-5">
+          <p className="text-sm text-gray-600">
+            Ahorro por transporte
+          </p>
 
-      <p className="font-bold mt-2">
-        Total CO₂ ahorrado:{" "}
-        {resultado.total_co2_ahorrado_kg} kg
+          <p className="mt-2 text-2xl font-bold text-green-700">
+            {resultado.co2_ahorrado_transporte_kg.toFixed(4)} kg
+          </p>
+        </article>
+
+        <article className="rounded-xl border border-green-100 bg-green-50 p-5">
+          <p className="text-sm text-gray-600">
+            Ahorro por empaque
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-green-700">
+            {resultado.co2_ahorrado_empaque_kg.toFixed(4)} kg
+          </p>
+        </article>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-green-700 p-6 text-white">
+        <p className="text-sm">
+          Total de CO₂ ahorrado
+        </p>
+
+        <p className="mt-2 text-3xl font-bold">
+          {resultado.total_co2_ahorrado_kg.toFixed(4)} kg
+        </p>
+
+        <p className="mt-2 text-sm text-green-100">
+          Un pequeño cambio puede generar un impacto positivo.
+        </p>
+      </div>
+
+      <p className="mt-4 text-xs text-gray-500">
+        Cálculo de demostración basado en un pedido completado de
+        6,57 km con transporte en bicicleta. Los valores son estimaciones.
       </p>
-    </div>
+    </section>
   );
 }
 

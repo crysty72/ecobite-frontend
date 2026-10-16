@@ -1,63 +1,85 @@
+
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { getProductos } from "../services/productService";
+import { useCart } from "../context/CartContext";
 
 function DetalleProducto() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const productos = [
-    {
-      id: 1,
-      name: "Ensalada fresca",
-      description:
-        "Una opción liviana preparada con ingredientes frescos.",
-      category: "Alimentos",
-      price: 4500,
-    },
-    {
-      id: 2,
-      name: "Bowl saludable",
-      description:
-        "Combinación equilibrada de vegetales y alimentos naturales.",
-      category: "Alimentos",
-      price: 5200,
-    },
-    {
-      id: 3,
-      name: "Wrap vegetal",
-      description:
-        "Una alternativa práctica, rica y consciente.",
-      category: "Alimentos",
-      price: 4800,
-    },
-    {
-      id: 4,
-      name: "Plato del día",
-      description:
-        "Una propuesta casera elaborada con ingredientes seleccionados.",
-      category: "Alimentos",
-      price: 5500,
-    },
-    {
-      id: 5,
-      name: "Smoothie natural",
-      description:
-        "Frutas frescas combinadas en una bebida nutritiva.",
-      category: "Bebidas",
-      price: 3500,
-    },
-    {
-      id: 6,
-      name: "Postre saludable",
-      description:
-        "Una opción dulce para cerrar tu comida.",
-      category: "Postres",
-      price: 3200,
-    },
-  ];
+  const [producto, setProducto] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
-  const producto = productos.find(
-    (item) => item.id === Number(id)
-  );
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarProducto() {
+      try {
+        setCargando(true);
+        setError("");
+
+        const productos = await getProductos();
+
+        const encontrado = productos.find(
+          (item) => Number(item.id) === Number(id)
+        );
+
+        if (activo) {
+          setProducto(encontrado || null);
+        }
+      } catch (err) {
+        console.error("Error al cargar el producto:", err);
+
+        if (activo) {
+          setError("No pudimos cargar el producto. Intentá nuevamente.");
+        }
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    }
+
+    cargarProducto();
+
+    return () => {
+      activo = false;
+    };
+  }, [id]);
+
+  const agregarAlCarrito = () => {
+    if (!producto) return;
+
+    addToCart(producto);
+    navigate("/carrito");
+  };
+
+  if (cargando) {
+    return (
+      <main className="min-h-screen bg-white px-6 py-20 text-center">
+        <p className="text-gray-600">Cargando producto...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-white px-6 py-20 text-center">
+        <p className="text-red-600 mb-6">{error}</p>
+
+        <button
+          type="button"
+          onClick={() => navigate("/productos")}
+          className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors"
+        >
+          Volver a productos
+        </button>
+      </main>
+    );
+  }
 
   if (!producto) {
     return (
@@ -85,48 +107,8 @@ function DetalleProducto() {
     );
   }
 
-  const agregarAlCarrito = () => {
-    const carritoActual =
-      JSON.parse(localStorage.getItem("carrito")) || [];
-
-    const productoExistente = carritoActual.find(
-      (item) => Number(item.id) === Number(producto.id)
-    );
-
-    let nuevoCarrito;
-
-    if (productoExistente) {
-      nuevoCarrito = carritoActual.map((item) =>
-        Number(item.id) === Number(producto.id)
-          ? {
-              ...item,
-              cantidad: Number(item.cantidad) + 1,
-            }
-          : item
-      );
-    } else {
-      nuevoCarrito = [
-        ...carritoActual,
-        {
-          id: producto.id,
-          nombre: producto.name,
-          precio: producto.price,
-          cantidad: 1,
-        },
-      ];
-    }
-
-    localStorage.setItem(
-      "carrito",
-      JSON.stringify(nuevoCarrito)
-    );
-
-    navigate("/carrito");
-  };
-
   return (
     <main className="bg-white min-h-screen">
-      {/* Encabezado */}
       <section className="bg-eco-50">
         <div className="max-w-7xl mx-auto px-6 py-14 md:py-20">
           <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
@@ -134,15 +116,13 @@ function DetalleProducto() {
           </span>
 
           <h1 className="font-coiny text-4xl md:text-6xl text-eco-900">
-            {producto.name}
+            {producto.nombre}
           </h1>
         </div>
       </section>
 
-      {/* Detalle */}
       <section className="max-w-5xl mx-auto px-6 py-14 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          {/* Imagen */}
           <div className="bg-eco-50 rounded-3xl min-h-[350px] flex items-center justify-center">
             <span
               className="text-8xl"
@@ -153,22 +133,21 @@ function DetalleProducto() {
             </span>
           </div>
 
-          {/* Información */}
           <div>
             <span className="inline-flex bg-eco-100 text-eco-700 px-4 py-2 rounded-full text-sm font-bold mb-5">
-              {producto.category}
+              {producto.categoria?.nombre || "Alimentos"}
             </span>
 
             <h2 className="font-coiny text-4xl text-eco-900 mb-5">
-              {producto.name}
+              {producto.nombre}
             </h2>
 
             <p className="text-lg text-gray-600 leading-relaxed mb-6">
-              {producto.description}
+              {producto.descripcion}
             </p>
 
             <p className="font-coiny text-3xl text-primary mb-8">
-              ${producto.price.toLocaleString("es-AR")}
+              ${Number(producto.precio).toLocaleString("es-AR")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">

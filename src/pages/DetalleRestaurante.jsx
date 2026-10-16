@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import DishCard from "../components/DishCard";
 
@@ -59,22 +60,22 @@ function DetalleRestaurante() {
 
   if (!restaurant) {
     return (
-      <main className="bg-white min-h-screen">
-        <section className="max-w-4xl mx-auto px-6 py-20 text-center">
-          <div className="text-7xl mb-6">🍽️</div>
+      <main className="min-h-screen bg-white">
+        <section className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <div className="mb-6 text-7xl">🍽️</div>
 
-          <h1 className="font-coiny text-4xl text-eco-900 mb-4">
+          <h1 className="mb-4 font-coiny text-4xl text-eco-900">
             Restaurante no encontrado
           </h1>
 
-          <p className="text-gray-600 mb-8">
+          <p className="mb-8 text-gray-600">
             No existe un restaurante con el ID {id}.
           </p>
 
           <button
             type="button"
             onClick={() => navigate("/restaurantes")}
-            className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors"
+            className="rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors hover:bg-eco-700"
           >
             Volver a restaurantes
           </button>
@@ -84,33 +85,33 @@ function DetalleRestaurante() {
   }
 
   return (
-    <main className="bg-white min-h-screen">
+    <main className="min-h-screen bg-white">
       {/* Encabezado */}
       <section className="bg-eco-50">
-        <div className="max-w-7xl mx-auto px-6 py-14 md:py-20">
-          <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
+        <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
+          <span className="mb-5 inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm">
             🌱 Restaurante EcoBite
           </span>
 
-          <h1 className="font-coiny text-4xl md:text-6xl text-eco-900 mb-5">
+          <h1 className="mb-5 font-coiny text-4xl text-eco-900 md:text-6xl">
             {restaurant.name}
           </h1>
 
-          <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
+          <p className="max-w-2xl text-lg leading-relaxed text-gray-600">
             {restaurant.description}
           </p>
 
-          <span className="inline-flex mt-5 bg-eco-100 text-eco-700 px-4 py-2 rounded-full text-sm font-bold">
+          <span className="mt-5 inline-flex rounded-full bg-eco-100 px-4 py-2 text-sm font-bold text-eco-700">
             {restaurant.category}
           </span>
         </div>
       </section>
 
-      {/* Información */}
-      <section className="max-w-7xl mx-auto px-6 py-14">
-        <div className="bg-white border border-eco-100 rounded-3xl shadow-sm p-6 md:p-8 mb-12">
-          <div className="flex flex-col md:flex-row md:items-center gap-6">
-            <div className="w-24 h-24 bg-eco-50 rounded-2xl flex items-center justify-center shrink-0">
+      {/* Información del restaurante */}
+      <section className="mx-auto max-w-7xl px-6 py-14">
+        <div className="mb-12 rounded-3xl border border-eco-100 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-eco-50">
               <span
                 className="text-5xl"
                 role="img"
@@ -125,7 +126,7 @@ function DetalleRestaurante() {
                 Una propuesta consciente
               </h2>
 
-              <p className="text-gray-600 mt-2 leading-relaxed">
+              <p className="mt-2 leading-relaxed text-gray-600">
                 Descubrí los platos disponibles de este restaurante y
                 elegí tus favoritos.
               </p>
@@ -133,27 +134,28 @@ function DetalleRestaurante() {
           </div>
         </div>
 
-        {/* Platos */}
+        {/* Platos disponibles */}
         <div className="mb-8">
           <h2 className="font-coiny text-3xl text-eco-900">
             Platos disponibles
           </h2>
 
-          <p className="text-gray-500 mt-2">
+          <p className="mt-2 text-gray-500">
             Elegí una opción y agregala a tu carrito.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+        <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
           {platos.map((plato) => (
-            <DishCard
-              key={plato.id}
-              id={`restaurante-${id}-plato-${plato.id}`}
-              name={plato.name}
-              description={plato.description}
-              price={plato.price}
-            />
-          ))}
+  <DishCard
+    key={`restaurante-${restaurant.id}-plato-${plato.id}`}
+    id={`restaurante-${restaurant.id}-plato-${plato.id}`}
+    name={plato.name}
+    description={plato.description}
+    price={plato.price}
+    restauranteId={restaurant.id}
+  />
+))}
         </div>
 
         {/* Volver */}
@@ -161,7 +163,7 @@ function DetalleRestaurante() {
           <button
             type="button"
             onClick={() => navigate("/restaurantes")}
-            className="border-2 border-primary text-primary px-6 py-3 rounded-xl font-bold hover:bg-eco-50 transition-colors"
+            className="rounded-xl border-2 border-primary px-6 py-3 font-bold text-primary transition-colors hover:bg-eco-50"
           >
             ← Volver a restaurantes
           </button>
