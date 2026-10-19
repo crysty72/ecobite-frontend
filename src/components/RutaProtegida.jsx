@@ -2,8 +2,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function RutaProtegida() {
-  const { estaAutenticado, cargando } = useAuth();
+export default function RutaProtegida({ soloAdmin = false }) {
+  const { estaAutenticado, usuario, cargando } = useAuth();
   const location = useLocation();
 
   if (cargando) {
@@ -18,6 +18,10 @@ export default function RutaProtegida() {
         state={{ from: location }}
       />
     );
+  }
+
+  if (soloAdmin && Number(usuario?.rolId) !== 3) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

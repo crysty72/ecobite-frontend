@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,9 +20,13 @@ function Login() {
     setCargando(true);
 
     try {
-      await login(email, password);
+      const data = await login(email, password);
 
-      navigate("/restaurantes");
+      if (Number(data.usuario?.rolId) === 3) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/restaurantes", { replace: true });
+      }
     } catch (error) {
       if (error.status === 401) {
         setError("El correo o la contraseña son incorrectos.");

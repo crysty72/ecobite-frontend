@@ -16,6 +16,7 @@ import Login from './pages/Login'
 import Registro from './pages/Registro'
 import Checkout from './pages/Checkout'
 import Confirmacion from './pages/Confirmacion'
+import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
   return (
@@ -32,6 +33,11 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/co2" element={<CO2Calculator />} />
+
+            {/* Ruta exclusiva para administración */}
+            <Route element={<RutaProtegida soloAdmin />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
 
             {/* Rutas que requieren sesión */}
             <Route element={<RutaProtegida />}>
