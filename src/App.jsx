@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import Layout from './components/Layout'
 import RutaProtegida from './components/RutaProtegida'
@@ -34,9 +34,16 @@ function App() {
             <Route path="/registro" element={<Registro />} />
             <Route path="/co2" element={<CO2Calculator />} />
 
-            {/* Ruta exclusiva para administración */}
+            {/* Rutas exclusivas para administración */}
             <Route element={<RutaProtegida soloAdmin />}>
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route
+                path="/admin/dashboard"
+                element={<AdminDashboard />}
+              />
+              <Route
+                path="/admin"
+                element={<Navigate to="/admin/dashboard" replace />}
+              />
             </Route>
 
             {/* Rutas que requieren sesión */}
