@@ -3,10 +3,30 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 const CartContext = createContext(null);
+
+function obtenerPrecio(producto) {
+  const valor = producto.precio ?? producto.price ?? 0;
+
+  if (typeof valor === "string") {
+    // Admite precios como "$ 3.500" y "3500".
+    const limpio = valor
+      .replace(/\$/g, "")
+      .replace(/\s/g, "")
+      .replace(/\./g, "")
+      .replace(",", ".");
+
+    const numero = Number(limpio);
+    return Number.isFinite(numero) ? numero : 0;
+  }
+
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : 0;
+}
 
 function obtenerCarritoInicial() {
   try {
@@ -21,8 +41,8 @@ function obtenerCarritoInicial() {
 
     return carrito.map((item) => ({
       ...item,
+      precio: obtenerPrecio(item),
       cantidad: Math.max(1, Number(item.cantidad) || 1),
-      precio: Number(item.precio) || 0,
     }));
   } catch (error) {
     console.error("Error al recuperar el carrito:", error);
@@ -43,6 +63,8 @@ export function CartProvider({ children }) {
   }, [carrito]);
 
   function addToCart(producto) {
+    const precioNuevo = obtenerPrecio(producto);
+
     setCarrito((carritoActual) => {
       const existente = carritoActual.find((item) =>
         idsIguales(item.id, producto.id)
@@ -53,7 +75,8 @@ export function CartProvider({ children }) {
           idsIguales(item.id, producto.id)
             ? {
                 ...item,
-                cantidad: Number(item.cantidad || 0) + 1,
+                precio: precioNuevo,
+                cantidad: (Number(item.cantidad) || 0) + 1,
               }
             : item
         );
@@ -63,8 +86,8 @@ export function CartProvider({ children }) {
         ...carritoActual,
         {
           id: producto.id,
-          nombre: producto.nombre,
-          precio: Number(producto.precio) || 0,
+          nombre: producto.nombre ?? producto.name ?? "Producto",
+          precio: precioNuevo,
           restauranteId: producto.restauranteId,
           cantidad: 1,
         },
@@ -83,7 +106,7 @@ export function CartProvider({ children }) {
   function updateQuantity(productoId, cantidad) {
     const nuevaCantidad = Number(cantidad);
 
-    if (nuevaCantidad <= 0) {
+    if (!Number.isFinite(nuevaCantidad) || nuevaCantidad <= 0) {
       removeFromCart(productoId);
       return;
     }
@@ -101,11 +124,15 @@ export function CartProvider({ children }) {
     setCarrito([]);
   }
 
-  const total = carrito.reduce(
-    (acumulado, item) =>
-      acumulado +
-      Number(item.precio || 0) * Number(item.cantidad || 0),
-    0
+  const total = useMemo(
+    () =>
+      carrito.reduce(
+        (acumulado, item) =>
+          acumulado +
+          obtenerPrecio(item) * (Number(item.cantidad) || 0),
+        0
+      ),
+    [carrito]
   );
 
   return (

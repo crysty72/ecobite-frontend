@@ -32,17 +32,37 @@ function Carrito() {
 
   const cantidadTotal = productos.reduce(
     (acumulado, producto) =>
-      acumulado + Number(producto.cantidad || 0),
+      acumulado + (Number(producto.cantidad) || 0),
     0
   );
 
+  // Comprobación temporal del cálculo del carrito.
+  console.log("Carrito:", productos, "Total calculado:", total);
+
+  // Calcula el importe directamente a partir de los productos.
+  const totalCalculado = productos.reduce(
+    (acumulado, producto) =>
+      acumulado +
+      (Number(producto.precio ?? producto.price) || 0) *
+        (Number(producto.cantidad) || 0),
+    0
+  );
+
+  const formatoPrecio = (precio) =>
+    Number(precio || 0).toLocaleString("es-AR");
+
   return (
     <main className="min-h-screen bg-white">
-      {/* Encabezado */}
       <section className="bg-eco-50">
         <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
-          <span className="mb-5 inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm">
-            🛒 Tu compra
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm">
+            <img
+              src="/carrito-verde.svg"
+              alt=""
+              aria-hidden="true"
+              className="h-5 w-5 object-contain"
+            />
+            Tu compra
           </span>
 
           <h1 className="mb-5 font-coiny text-4xl text-eco-900 md:text-6xl">
@@ -58,7 +78,11 @@ function Carrito() {
       <section className="mx-auto max-w-7xl px-6 py-14">
         {productos.length === 0 ? (
           <div className="py-16 text-center">
-            <div className="mb-6 text-7xl">🛒</div>
+            <img
+              src="/carrito-verde.svg"
+              alt="Carrito de compras vacío"
+              className="mx-auto mb-6 h-20 w-20 object-contain"
+            />
 
             <h2 className="mb-4 font-coiny text-3xl text-eco-900">
               Tu carrito está vacío
@@ -98,9 +122,9 @@ function Carrito() {
 
                       <p className="mt-2 text-lg font-bold text-primary">
                         $
-                        {Number(
-                          producto.precio ?? producto.price ?? 0
-                        ).toLocaleString("es-AR")}
+                        {formatoPrecio(
+                          producto.precio ?? producto.price
+                        )}
                       </p>
                     </div>
 
@@ -109,7 +133,9 @@ function Carrito() {
                         type="button"
                         onClick={() => disminuirCantidad(producto)}
                         className="h-10 w-10 rounded-xl border-2 border-primary text-xl font-bold text-primary transition-colors hover:bg-eco-50"
-                        aria-label={`Disminuir cantidad de ${producto.nombre || producto.name}`}
+                        aria-label={`Disminuir cantidad de ${
+                          producto.nombre || producto.name
+                        }`}
                       >
                         −
                       </button>
@@ -122,7 +148,9 @@ function Carrito() {
                         type="button"
                         onClick={() => aumentarCantidad(producto)}
                         className="h-10 w-10 rounded-xl bg-primary text-xl font-bold text-white transition-colors hover:bg-eco-700"
-                        aria-label={`Aumentar cantidad de ${producto.nombre || producto.name}`}
+                        aria-label={`Aumentar cantidad de ${
+                          producto.nombre || producto.name
+                        }`}
                       >
                         +
                       </button>
@@ -162,14 +190,13 @@ function Carrito() {
                 </div>
 
                 <div className="mt-4 border-t border-eco-200 pt-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="font-bold text-gray-700">
                       Total
                     </span>
 
                     <span className="font-coiny text-2xl text-primary">
-                      $
-                      {Number(total).toLocaleString("es-AR")}
+                      ${formatoPrecio(totalCalculado)}
                     </span>
                   </div>
                 </div>

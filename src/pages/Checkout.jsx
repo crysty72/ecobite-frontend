@@ -138,8 +138,7 @@ function Checkout() {
 
         const bicicleta = listaTransportes.find(
           (transporte) =>
-            String(transporte.nombre).toLowerCase() ===
-            "bicicleta"
+            String(transporte.nombre).toLowerCase() === "bicicleta"
         );
 
         setTransporteId((actual) => {
@@ -171,8 +170,6 @@ function Checkout() {
         }
       }
 
-      // Las zonas se cargan por separado para que un error
-      // en este servicio no oculte los demás datos del checkout.
       try {
         const respuestaZonas = await fetch(
           `${API_URL}/zonas`,
@@ -249,10 +246,46 @@ function Checkout() {
     reintentoZonas,
   ]);
 
+  async function consultarImpactoAmbiental(pedidoId) {
+    const respuesta = await fetch(
+      `${API_URL}/impacto-ambiental`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!respuesta.ok) {
+      throw new Error(
+        `No se pudo consultar el impacto ambiental (HTTP ${respuesta.status}).`
+      );
+    }
+
+    const registros = await respuesta.json();
+
+    if (!Array.isArray(registros)) {
+      throw new Error(
+        "La respuesta de impacto ambiental no es una lista válida."
+      );
+    }
+
+    return (
+      registros.find(
+        (registro) =>
+          String(registro.pedidoId) === String(pedidoId)
+      ) ?? null
+    );
+  }
+
   async function confirmarPedido(event) {
     event.preventDefault();
     setError("");
     setAvisoImpacto("");
+    setImpacto(null);
+
+    if (enviando) return;
 
     if (!estaAutenticado || !usuario?.id || !token) {
       setError("Iniciá sesión para realizar tu pedido.");
@@ -340,7 +373,7 @@ function Checkout() {
         "Producto sin nombre";
 
       setError(
-        `El producto "${nombre}" no tiene un ID numérico válido. Los platos de ejemplo no se pueden confirmar como pedidos reales. Usá un producto del catálogo conectado al backend.`
+        `El producto "${nombre}" no tiene datos válidos. Usá un producto del catálogo conectado al backend.`
       );
       return;
     }
@@ -391,39 +424,36 @@ function Checkout() {
         );
       }
 
-      clearCart();
+      // El pedido ya fue creado correctamente.
+      // No volver a enviar POST /pedidos para consultar el impacto.
       setPedidoCreado(datosPedido);
+      clearCart();
 
       if (datosPedido.id != null) {
         try {
-          const respuestaImpacto = await fetch(
-            `${API_URL}/impacto-ambiental/pedido/${datosPedido.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-              },
-            }
-          );
+          const registroImpacto =
+            await consultarImpactoAmbiental(datosPedido.id);
 
-          if (respuestaImpacto.ok) {
-            const datosImpacto =
-              await respuestaImpacto.json();
-
-            setImpacto(datosImpacto);
+          if (registroImpacto) {
+            setImpacto(registroImpacto);
           } else {
             setAvisoImpacto(
-              "El pedido se creó, pero no se pudo consultar su impacto ambiental."
+              "El pedido se creó correctamente, pero todavía no hay un registro de impacto ambiental para este pedido."
             );
           }
-        } catch {
+        } catch (err) {
+          console.error(
+            "Error al consultar el impacto ambiental:",
+            err
+          );
+
           setAvisoImpacto(
-            "El pedido se creó, pero no se pudo consultar su impacto ambiental."
+            "El pedido se creó correctamente, pero no se pudo consultar su impacto ambiental."
           );
         }
       } else {
         setAvisoImpacto(
-          "El pedido se creó, pero la respuesta no incluyó su identificador para consultar el impacto."
+          "El pedido se creó correctamente, pero la respuesta no incluyó su identificador."
         );
       }
     } catch (err) {
@@ -463,14 +493,9 @@ function Checkout() {
   }
 
   if (pedidoCreado) {
-    const kgTransporte =
-      impacto?.co2_ahorrado_transporte_kg;
-
-    const kgEmpaque =
-      impacto?.co2_ahorrado_empaque_kg;
-
-    const kgTotal =
-      impacto?.total_co2_ahorrado_kg;
+    const kgTransporte = impacto?.co2AhorradoTransporteKg;
+    const kgEmpaque = impacto?.co2AhorradoEmpaqueKg;
+    const kgTotal = impacto?.totalCo2AhorradoKg;
 
     return (
       <main className="mx-auto max-w-2xl p-6">
@@ -542,27 +567,39 @@ function Checkout() {
                 kgEmpaque == null &&
                 kgTotal == null && (
                   <p>
-                    Se consultó el impacto ambiental, pero la
-                    respuesta no contiene valores de CO₂
-                    reconocidos por esta pantalla.
+                    Se encontró el registro de impacto ambiental,
+                    pero no contiene los campos de CO₂ esperados.
                   </p>
                 )}
             </section>
           )}
 
           {avisoImpacto && (
-            <p className="mb-4 text-amber-700">
+            <p
+              role="status"
+              className="mb-4 text-amber-700"
+            >
               {avisoImpacto}
             </p>
           )}
 
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white"
-          >
-            Volver al inicio
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white"
+            >
+              Volver al inicio
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/productos")}
+              className="rounded-lg border border-green-600 px-5 py-3 font-semibold text-green-700"
+            >
+              Seguir comprando
+            </button>
+          </div>
         </section>
       </main>
     );
@@ -865,9 +902,8 @@ function Checkout() {
                 />
 
                 <p className="mt-2 text-sm text-gray-600">
-                  Ingresá la distancia de entrega que
-                  corresponda al pedido. No se calcula
-                  automáticamente.
+                  Ingresá la distancia de entrega que corresponda
+                  al pedido. No se calcula automáticamente.
                 </p>
               </section>
 
