@@ -1,5 +1,4 @@
 
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -68,7 +67,6 @@ const esRestauranteActivo = (restaurante) =>
   );
 
 function Icono({ tipo, className = "h-6 w-6" }) {
-  // Ícono original de Figma para el carrito.
   if (tipo === "carrito") {
     return (
       <img
@@ -201,6 +199,11 @@ function AdminDashboard() {
   const [errorImpacto, setErrorImpacto] = useState("");
   const [cargandoImpacto, setCargandoImpacto] = useState(true);
 
+  // Estadísticas generales del endpoint oficial del dashboard.
+  const [statsDashboard, setStatsDashboard] = useState(null);
+  const [errorStats, setErrorStats] = useState("");
+  const [cargandoStats, setCargandoStats] = useState(true);
+
   useEffect(() => {
     let activo = true;
 
@@ -250,7 +253,6 @@ function AdminDashboard() {
           throw new Error("La respuesta de restaurantes no es válida.");
         }
 
-        // Conservamos todos para mostrar activos e inactivos.
         if (activo) setRestaurantes(lista);
       } catch (error) {
         if (activo) {
@@ -376,6 +378,77 @@ function AdminDashboard() {
     };
   }, []);
 
+  // Consulta GET /api/v1/dashboard/stats.
+  useEffect(() => {
+    let activo = true;
+
+    async function cargarStatsDashboard() {
+      try {
+        const token = localStorage.getItem("ecobite-token");
+
+        if (!token) {
+          throw new Error(
+            "Iniciá sesión nuevamente para consultar las estadísticas."
+          );
+        }
+
+        const response = await fetch(`${API_URL}/dashboard/stats`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            response.status === 401 || response.status === 403
+              ? "La sesión no está autorizada para ver las estadísticas."
+              : `Error al consultar las estadísticas: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        const totalOrders = Number(data.totalOrders);
+        const totalRevenue = Number(data.totalRevenue);
+        const totalCo2Saved = Number(data.totalCo2Saved);
+
+        if (
+          !Number.isFinite(totalOrders) ||
+          !Number.isFinite(totalRevenue) ||
+          !Number.isFinite(totalCo2Saved)
+        ) {
+          throw new Error(
+            "La respuesta de estadísticas no tiene el formato esperado."
+          );
+        }
+
+        if (activo) {
+          setStatsDashboard({
+            totalOrders,
+            totalRevenue,
+            totalCo2Saved,
+          });
+        }
+      } catch (error) {
+        if (activo) {
+          setErrorStats(
+            error.message ||
+              "No se pudieron cargar las estadísticas del dashboard."
+          );
+        }
+      } finally {
+        if (activo) setCargandoStats(false);
+      }
+    }
+
+    cargarStatsDashboard();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const productosExcedentes = productos.filter(
     (producto) => producto.esExcedente === true
   ).length;
@@ -390,6 +463,7 @@ function AdminDashboard() {
 
   const pedidosCompletados = pedidos.filter(esPedidoCompletado);
 
+  // Los pedidos completados se calculan a partir de sus estados reales.
   const totalRecaudado = pedidosCompletados.reduce(
     (total, pedido) =>
       total + (Number(pedido.totalPrecio) || 0),
@@ -633,12 +707,14 @@ function AdminDashboard() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <TarjetaMetrica
                 titulo="Total recaudado"
-                valor={formatearMoneda(totalRecaudado)}
-                descripcion="Suma de pedidos completados"
+                valor={formatearMoneda(
+                  statsDashboard?.totalRevenue ?? totalRecaudado
+                )}
+                descripcion="Total informado por las estadísticas del dashboard"
                 icono="dinero"
                 tono="verde"
-                cargando={cargandoPedidos}
-                error={errorPedidos}
+                cargando={cargandoStats || cargandoPedidos}
+                error={errorStats && errorPedidos ? errorStats : ""}
               />
 
               <TarjetaMetrica
@@ -653,12 +729,15 @@ function AdminDashboard() {
 
               <TarjetaMetrica
                 titulo="CO₂ ahorrado"
-                valor={formatearKg(kpisAmbientales?.totalCo2AhorradoKg)}
-                descripcion="Impacto ambiental registrado"
+                valor={formatearKg(
+                  statsDashboard?.totalCo2Saved ??
+                    kpisAmbientales?.totalCo2AhorradoKg
+                )}
+                descripcion="Total informado por las estadísticas del dashboard"
                 icono="hoja"
                 tono="oscuro"
-                cargando={cargandoImpacto}
-                error={errorImpacto}
+                cargando={cargandoStats || cargandoImpacto}
+                error={errorStats && errorImpacto ? errorStats : ""}
               />
 
               <TarjetaMetrica
