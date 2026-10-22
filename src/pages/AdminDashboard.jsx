@@ -127,6 +127,14 @@ function Icono({ tipo, className = "h-6 w-6" }) {
       </>
     ),
     flecha: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    dashboard: (
+      <>
+        <rect x="3" y="3" width="8" height="8" rx="1" />
+        <rect x="13" y="3" width="8" height="5" rx="1" />
+        <rect x="13" y="10" width="8" height="11" rx="1" />
+        <rect x="3" y="13" width="8" height="8" rx="1" />
+      </>
+    ),
   };
 
   return <svg {...props}>{dibujos[tipo] || dibujos.hoja}</svg>;
@@ -140,6 +148,7 @@ function TarjetaMetrica({
   cargando,
   error,
   tono = "verde",
+  destacada = false,
 }) {
   const tonos = {
     verde: "bg-[#e8f5cf] text-[#285d2a]",
@@ -149,10 +158,18 @@ function TarjetaMetrica({
   };
 
   return (
-    <article className="rounded-2xl border border-[#e8ebdf] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md sm:p-6">
+    <article
+      className={`rounded-2xl border p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md sm:p-6 ${
+        destacada
+          ? "border-[#b7d66a] bg-[#f0f8df]"
+          : "border-[#e8ebdf] bg-white"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#687267]">{titulo}</p>
+          <p className="text-sm font-medium text-[#687267]">
+            {titulo}
+          </p>
 
           {cargando ? (
             <div
@@ -165,8 +182,11 @@ function TarjetaMetrica({
             </p>
           )}
 
-          <p className="mt-2 text-xs leading-5 text-[#7b8377]">
-            {error || descripcion}
+          <p
+            className="mt-2 text-xs leading-5 text-[#7b8377]"
+            role={error ? "status" : undefined}
+          >
+            {cargando ? "Consultando información..." : error || descripcion}
           </p>
         </div>
 
@@ -177,6 +197,45 @@ function TarjetaMetrica({
         </div>
       </div>
     </article>
+  );
+}
+
+function EstadoPedido({ estado }) {
+  const normalizado = normalizarEstado(estado);
+
+  let estilo = "bg-[#fff2cc] text-[#876315]";
+
+  if (
+    [
+      "completado",
+      "completada",
+      "entregado",
+      "entregada",
+      "finalizado",
+      "finalizada",
+    ].includes(normalizado)
+  ) {
+    estilo = "bg-[#e5f5d7] text-[#315e32]";
+  } else if (
+    [
+      "en camino",
+      "encamino",
+      "en transito",
+      "en tránsito",
+      "en reparto",
+    ].includes(normalizado)
+  ) {
+    estilo = "bg-blue-100 text-blue-800";
+  } else if (["cancelado", "cancelada"].includes(normalizado)) {
+    estilo = "bg-red-100 text-red-700";
+  }
+
+  return (
+    <span
+      className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${estilo}`}
+    >
+      {estado || "Sin estado"}
+    </span>
   );
 }
 
@@ -199,7 +258,6 @@ function AdminDashboard() {
   const [errorImpacto, setErrorImpacto] = useState("");
   const [cargandoImpacto, setCargandoImpacto] = useState(true);
 
-  // Estadísticas generales del endpoint oficial del dashboard.
   const [statsDashboard, setStatsDashboard] = useState(null);
   const [errorStats, setErrorStats] = useState("");
   const [cargandoStats, setCargandoStats] = useState(true);
@@ -207,66 +265,63 @@ function AdminDashboard() {
   useEffect(() => {
     let activo = true;
 
-    async function cargarProductos() {
-      try {
-        const response = await fetch(`${API_URL}/productos`);
+    async function cargarCatalogos() {
+      const solicitudes = [
+        {
+          url: `${API_URL}/productos`,
+          setDatos: setProductos,
+          setError: setErrorProductos,
+          setCargando: setCargandoProductos,
+          transformar: (lista) =>
+            lista.filter((producto) => producto.activo !== false),
+          nombre: "productos",
+        },
+        {
+          url: `${API_URL}/restaurantes`,
+          setDatos: setRestaurantes,
+          setError: setErrorRestaurantes,
+          setCargando: setCargandoRestaurantes,
+          transformar: (lista) => lista,
+          nombre: "restaurantes",
+        },
+      ];
 
-        if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status}`);
-        }
+      await Promise.all(
+        solicitudes.map(async (solicitud) => {
+          try {
+            const response = await fetch(solicitud.url);
 
-        const data = await response.json();
-        const lista = obtenerLista(data);
+            if (!response.ok) {
+              throw new Error(`Error HTTP ${response.status}`);
+            }
 
-        if (!lista) {
-          throw new Error("La respuesta de productos no es válida.");
-        }
+            const data = await response.json();
+            const lista = obtenerLista(data);
 
-        if (activo) {
-          setProductos(
-            lista.filter((producto) => producto.activo !== false)
-          );
-        }
-      } catch (error) {
-        if (activo) {
-          setErrorProductos(
-            error.message || "No se pudieron cargar los productos."
-          );
-        }
-      } finally {
-        if (activo) setCargandoProductos(false);
-      }
+            if (!lista) {
+              throw new Error(
+                `La respuesta de ${solicitud.nombre} no es válida.`
+              );
+            }
+
+            if (activo) {
+              solicitud.setDatos(solicitud.transformar(lista));
+            }
+          } catch (error) {
+            if (activo) {
+              solicitud.setError(
+                error.message ||
+                  `No se pudieron cargar los ${solicitud.nombre}.`
+              );
+            }
+          } finally {
+            if (activo) solicitud.setCargando(false);
+          }
+        })
+      );
     }
 
-    async function cargarRestaurantes() {
-      try {
-        const response = await fetch(`${API_URL}/restaurantes`);
-
-        if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const lista = obtenerLista(data);
-
-        if (!lista) {
-          throw new Error("La respuesta de restaurantes no es válida.");
-        }
-
-        if (activo) setRestaurantes(lista);
-      } catch (error) {
-        if (activo) {
-          setErrorRestaurantes(
-            error.message || "No se pudieron cargar los restaurantes."
-          );
-        }
-      } finally {
-        if (activo) setCargandoRestaurantes(false);
-      }
-    }
-
-    cargarProductos();
-    cargarRestaurantes();
+    cargarCatalogos();
 
     return () => {
       activo = false;
@@ -336,7 +391,7 @@ function AdminDashboard() {
 
         if (!token) {
           throw new Error(
-            "Iniciá sesión nuevamente para ver el impacto ambiental."
+            "Iniciá sesión nuevamente para consultar el impacto ambiental."
           );
         }
 
@@ -352,7 +407,7 @@ function AdminDashboard() {
 
         if (!response.ok) {
           throw new Error(
-            `Error al consultar el impacto: ${response.status}`
+            `Error al consultar el impacto ambiental: ${response.status}`
           );
         }
 
@@ -378,7 +433,6 @@ function AdminDashboard() {
     };
   }, []);
 
-  // Consulta GET /api/v1/dashboard/stats.
   useEffect(() => {
     let activo = true;
 
@@ -453,9 +507,7 @@ function AdminDashboard() {
     (producto) => producto.esExcedente === true
   ).length;
 
-  const restaurantesActivos = restaurantes.filter(
-    esRestauranteActivo
-  );
+  const restaurantesActivos = restaurantes.filter(esRestauranteActivo);
 
   const restaurantesInactivos = restaurantes.filter(
     (restaurante) => !esRestauranteActivo(restaurante)
@@ -463,10 +515,8 @@ function AdminDashboard() {
 
   const pedidosCompletados = pedidos.filter(esPedidoCompletado);
 
-  // Los pedidos completados se calculan a partir de sus estados reales.
   const totalRecaudado = pedidosCompletados.reduce(
-    (total, pedido) =>
-      total + (Number(pedido.totalPrecio) || 0),
+    (total, pedido) => total + (Number(pedido.totalPrecio) || 0),
     0
   );
 
@@ -475,7 +525,10 @@ function AdminDashboard() {
       const fechaA = new Date(a.fechaCreacion || 0).getTime();
       const fechaB = new Date(b.fechaCreacion || 0).getTime();
 
-      return fechaB - fechaA;
+      return (
+        (Number.isFinite(fechaB) ? fechaB : 0) -
+        (Number.isFinite(fechaA) ? fechaA : 0)
+      );
     })
     .slice(0, 5);
 
@@ -514,6 +567,22 @@ function AdminDashboard() {
     },
   ];
 
+  const totalPedidos = statsDashboard?.totalOrders ?? pedidos.length;
+
+  const totalCO2 =
+    statsDashboard?.totalCo2Saved ??
+    kpisAmbientales?.totalCo2AhorradoKg;
+
+  const errorRecaudacion =
+    errorStats && !statsDashboard && errorPedidos && pedidos.length === 0
+      ? errorStats
+      : "";
+
+  const errorCO2 =
+    errorStats && !statsDashboard && errorImpacto && !kpisAmbientales
+      ? errorStats
+      : "";
+
   return (
     <div className="min-h-screen bg-[#f5f6ef] text-[#26392a]">
       <div className="flex min-h-screen flex-col lg:flex-row">
@@ -550,7 +619,7 @@ function AdminDashboard() {
                 aria-current="page"
                 className="flex items-center gap-3 rounded-xl bg-[#d7f36b] px-4 py-3 text-sm font-bold text-[#20382a]"
               >
-                <span aria-hidden="true">▦</span>
+                <Icono tipo="dashboard" className="h-5 w-5" />
                 Dashboard
               </Link>
 
@@ -560,10 +629,7 @@ function AdminDashboard() {
                   to={acceso.ruta}
                   className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-[#e0e9dc] transition hover:bg-white/10"
                 >
-                  <Icono
-                    tipo={acceso.icono}
-                    className="h-5 w-5"
-                  />
+                  <Icono tipo={acceso.icono} className="h-5 w-5" />
                   {acceso.titulo}
                 </Link>
               ))}
@@ -591,7 +657,7 @@ function AdminDashboard() {
 
           <div className="mt-6 border-t border-white/10 pt-5 lg:mt-auto">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d7f36b] font-bold text-[#20382a]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d7f36b] font-bold text-[#20382a]">
                 {(usuario?.nombre || usuario?.email || "A")
                   .charAt(0)
                   .toUpperCase()}
@@ -634,13 +700,11 @@ function AdminDashboard() {
             </div>
 
             <div className="rounded-xl border border-[#e1e6d8] bg-white px-4 py-3">
-              <p className="text-xs text-[#7b8377]">
-                Estado del panel
-              </p>
+              <p className="text-xs text-[#7b8377]">Estado del panel</p>
               <div className="mt-1 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#75ae38]" />
                 <span className="text-sm font-semibold text-[#315e32]">
-                  Conexiones disponibles
+                  Panel de administración
                 </span>
               </div>
             </div>
@@ -681,65 +745,71 @@ function AdminDashboard() {
                 />
               </div>
             </div>
-
-            <div className="pointer-events-none absolute -bottom-14 right-40 hidden h-28 w-28 rounded-full bg-white/20 sm:block" />
           </section>
 
-          <section aria-labelledby="metricas-heading">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h3
-                  id="metricas-heading"
-                  className="text-lg font-extrabold text-[#26392a]"
-                >
-                  Resumen de actividad
-                </h3>
-                <p className="mt-1 text-sm text-[#788174]">
-                  Indicadores basados en los datos disponibles.
-                </p>
-              </div>
-
-              <span className="text-xs text-[#788174]">
-                Actualizados al consultar el panel
-              </span>
+          <section aria-labelledby="metricas-principales">
+            <div className="mb-4">
+              <h3
+                id="metricas-principales"
+                className="text-lg font-extrabold text-[#26392a]"
+              >
+                Indicadores principales
+              </h3>
+              <p className="mt-1 text-sm text-[#788174]">
+                Impacto ambiental, ventas y cumplimiento de pedidos.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <TarjetaMetrica
+                titulo="CO₂ ahorrado"
+                valor={formatearKg(totalCO2)}
+                descripcion="Impacto ambiental registrado por la plataforma"
+                icono="hoja"
+                tono="oscuro"
+                destacada
+                cargando={cargandoStats || cargandoImpacto}
+                error={errorCO2}
+              />
+
               <TarjetaMetrica
                 titulo="Total recaudado"
                 valor={formatearMoneda(
                   statsDashboard?.totalRevenue ?? totalRecaudado
                 )}
-                descripcion="Total informado por las estadísticas del dashboard"
+                descripcion="Importe informado por las estadísticas del dashboard"
                 icono="dinero"
                 tono="verde"
                 cargando={cargandoStats || cargandoPedidos}
-                error={errorStats && errorPedidos ? errorStats : ""}
+                error={errorRecaudacion}
               />
 
               <TarjetaMetrica
                 titulo="Pedidos completados"
                 valor={pedidosCompletados.length}
-                descripcion={`De ${pedidos.length} pedidos registrados`}
+                descripcion={`De ${totalPedidos} pedidos registrados`}
                 icono="pedidos"
                 tono="lima"
-                cargando={cargandoPedidos}
+                cargando={cargandoPedidos || cargandoStats}
                 error={errorPedidos}
               />
+            </div>
+          </section>
 
-              <TarjetaMetrica
-                titulo="CO₂ ahorrado"
-                valor={formatearKg(
-                  statsDashboard?.totalCo2Saved ??
-                    kpisAmbientales?.totalCo2AhorradoKg
-                )}
-                descripcion="Total informado por las estadísticas del dashboard"
-                icono="hoja"
-                tono="oscuro"
-                cargando={cargandoStats || cargandoImpacto}
-                error={errorStats && errorImpacto ? errorStats : ""}
-              />
+          <section className="mt-8" aria-labelledby="metricas-secundarias">
+            <div className="mb-4">
+              <h3
+                id="metricas-secundarias"
+                className="text-lg font-extrabold text-[#26392a]"
+              >
+                Indicadores operativos
+              </h3>
+              <p className="mt-1 text-sm text-[#788174]">
+                Información adicional sobre comercios y transporte.
+              </p>
+            </div>
 
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <TarjetaMetrica
                 titulo="Productos activos"
                 valor={productos.length}
@@ -774,15 +844,18 @@ function AdminDashboard() {
             </div>
           </section>
 
-          <section className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-3">
-            <article className="rounded-2xl border border-[#e5e9de] bg-white p-5 sm:p-6 xl:col-span-2">
+          <section className="mt-8" aria-labelledby="pedidos-recientes">
+            <article className="rounded-2xl border border-[#e5e9de] bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-extrabold text-[#26392a]">
-                    Pedidos recientes
+                  <h3
+                    id="pedidos-recientes"
+                    className="text-lg font-extrabold text-[#26392a]"
+                  >
+                    Últimos pedidos
                   </h3>
                   <p className="mt-1 text-sm text-[#788174]">
-                    Últimos cinco pedidos registrados.
+                    Los cinco pedidos más recientes registrados.
                   </p>
                 </div>
 
@@ -815,101 +888,93 @@ function AdminDashboard() {
                   <table className="w-full min-w-[620px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-[#e9ece5] text-xs uppercase tracking-wide text-[#7b8377]">
-                        <th className="px-3 py-3 font-semibold">Pedido</th>
-                        <th className="px-3 py-3 font-semibold">Fecha</th>
-                        <th className="px-3 py-3 font-semibold">Total</th>
-                        <th className="px-3 py-3 font-semibold">Estado</th>
+                        <th scope="col" className="px-3 py-3 font-semibold">
+                          Pedido
+                        </th>
+                        <th scope="col" className="px-3 py-3 font-semibold">
+                          Fecha
+                        </th>
+                        <th scope="col" className="px-3 py-3 font-semibold">
+                          Total
+                        </th>
+                        <th scope="col" className="px-3 py-3 font-semibold">
+                          Estado
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody className="divide-y divide-[#edf0e9]">
-                      {pedidosRecientes.map((pedido) => {
-                        const estado = normalizarEstado(
-                          pedido.estadoNombre
-                        );
+                      {pedidosRecientes.map((pedido, indice) => (
+                        <tr
+                          key={pedido.id ?? `${pedido.fechaCreacion}-${indice}`}
+                          className="transition hover:bg-[#f8faf4]"
+                        >
+                          <td className="px-3 py-4 font-bold text-[#26392a]">
+                            #{pedido.id ?? "—"}
+                          </td>
 
-                        const claseEstado = [
-                          "completado",
-                          "completada",
-                          "entregado",
-                          "entregada",
-                          "finalizado",
-                          "finalizada",
-                        ].includes(estado)
-                          ? "bg-[#e5f5d7] text-[#315e32]"
-                          : ["cancelado", "cancelada"].includes(estado)
-                            ? "bg-red-100 text-red-700"
-                            : "bg-[#fff2cc] text-[#876315]";
+                          <td className="whitespace-nowrap px-3 py-4 text-[#697367]">
+                            {formatearFecha(pedido.fechaCreacion)}
+                          </td>
 
-                        return (
-                          <tr
-                            key={pedido.id}
-                            className="transition hover:bg-[#f8faf4]"
-                          >
-                            <td className="px-3 py-4 font-bold text-[#26392a]">
-                              #{pedido.id}
-                            </td>
+                          <td className="whitespace-nowrap px-3 py-4 font-semibold text-[#26392a]">
+                            {formatearMoneda(pedido.totalPrecio)}
+                          </td>
 
-                            <td className="whitespace-nowrap px-3 py-4 text-[#697367]">
-                              {formatearFecha(pedido.fechaCreacion)}
-                            </td>
-
-                            <td className="whitespace-nowrap px-3 py-4 font-semibold text-[#26392a]">
-                              {formatearMoneda(pedido.totalPrecio)}
-                            </td>
-
-                            <td className="px-3 py-4">
-                              <span
-                                className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${claseEstado}`}
-                              >
-                                {pedido.estadoNombre || "Sin estado"}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                          <td className="px-3 py-4">
+                            <EstadoPedido estado={pedido.estadoNombre} />
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               )}
             </article>
+          </section>
 
-            <article className="flex flex-col rounded-2xl bg-[#20382a] p-6 text-white">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#d7f36b]">
-                    Nuestro impacto
-                  </p>
-                  <h3 className="mt-2 text-xl font-extrabold">
-                    Un planeta más verde
-                  </h3>
+          <section className="mt-8" aria-labelledby="impacto-detalle">
+            <article className="rounded-2xl bg-[#20382a] p-6 text-white sm:p-7">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#d7f36b] text-[#20382a]">
+                    <Icono tipo="hoja" className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#d7f36b]">
+                      Sustentabilidad
+                    </p>
+                    <h3
+                      id="impacto-detalle"
+                      className="mt-1 text-xl font-extrabold"
+                    >
+                      Nuestro impacto ambiental
+                    </h3>
+                  </div>
                 </div>
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#d7f36b] text-[#20382a]">
-                  <Icono tipo="hoja" className="h-7 w-7" />
-                </div>
+                <Link
+                  to="/co2"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#d7f36b] px-4 py-3 text-sm font-bold text-[#20382a] transition hover:bg-[#c8e65c]"
+                >
+                  Ver detalle
+                  <Icono tipo="flecha" className="h-4 w-4" />
+                </Link>
               </div>
 
-              <p className="mt-3 text-sm leading-6 text-[#d1ddce]">
-                La información ambiental ayuda a seguir el impacto del
-                transporte y los empaques en cada pedido.
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-[#d1ddce]">
+                Seguimos las emisiones asociadas al transporte y los
+                empaques para comprender mejor el impacto de cada pedido.
               </p>
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#d7f36b]">
-                      <Icono tipo="bicicleta" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Transporte</p>
-                      <p className="mt-1 text-xs text-[#bdcbbb]">
-                        Emisiones asociadas al traslado.
-                      </p>
-                    </div>
+                    <Icono tipo="bicicleta" className="h-6 w-6 text-[#d7f36b]" />
+                    <p className="text-sm font-semibold">Transporte</p>
                   </div>
 
-                  <p className="mt-3 text-lg font-bold text-[#d7f36b]">
+                  <p className="mt-3 text-xl font-bold text-[#d7f36b]">
                     {cargandoImpacto
                       ? "Calculando..."
                       : errorImpacto
@@ -918,24 +983,18 @@ function AdminDashboard() {
                             kpisAmbientales?.totalCo2TransporteKg
                           )}
                   </p>
+                  <p className="mt-1 text-xs text-[#bdcbbb]">
+                    Emisiones asociadas al traslado.
+                  </p>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#d7f36b]">
-                      <Icono tipo="producto" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">
-                        Envases y empaques
-                      </p>
-                      <p className="mt-1 text-xs text-[#bdcbbb]">
-                        Impacto registrado de los empaques.
-                      </p>
-                    </div>
+                    <Icono tipo="producto" className="h-6 w-6 text-[#d7f36b]" />
+                    <p className="text-sm font-semibold">Envases y empaques</p>
                   </div>
 
-                  <p className="mt-3 text-lg font-bold text-[#d7f36b]">
+                  <p className="mt-3 text-xl font-bold text-[#d7f36b]">
                     {cargandoImpacto
                       ? "Calculando..."
                       : errorImpacto
@@ -944,22 +1003,20 @@ function AdminDashboard() {
                             kpisAmbientales?.totalCo2EmpaqueKg
                           )}
                   </p>
+                  <p className="mt-1 text-xs text-[#bdcbbb]">
+                    Impacto registrado de los empaques.
+                  </p>
                 </div>
               </div>
-
-              <Link
-                to="/co2"
-                className="mt-6 inline-flex items-center justify-between rounded-xl bg-[#d7f36b] px-4 py-3 text-sm font-bold text-[#20382a] transition hover:bg-[#c8e65c]"
-              >
-                Explorar impacto ambiental
-                <Icono tipo="flecha" className="h-4 w-4" />
-              </Link>
             </article>
           </section>
 
-          <section className="mt-8">
+          <section className="mt-8" aria-labelledby="accesos-rapidos">
             <div className="mb-4">
-              <h3 className="text-lg font-extrabold text-[#26392a]">
+              <h3
+                id="accesos-rapidos"
+                className="text-lg font-extrabold text-[#26392a]"
+              >
                 Accesos rápidos
               </h3>
               <p className="mt-1 text-sm text-[#788174]">
