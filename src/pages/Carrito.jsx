@@ -12,7 +12,6 @@ function Carrito() {
     removeFromCart,
     updateQuantity,
     clearCart,
-    total,
   } = useCart();
 
   const aumentarCantidad = (producto) => {
@@ -36,10 +35,6 @@ function Carrito() {
     0
   );
 
-  // Comprobación temporal del cálculo del carrito.
-  console.log("Carrito:", productos, "Total calculado:", total);
-
-  // Calcula el importe directamente a partir de los productos.
   const totalCalculado = productos.reduce(
     (acumulado, producto) =>
       acumulado +
@@ -54,8 +49,8 @@ function Carrito() {
   return (
     <main className="min-h-screen bg-white">
       <section className="bg-eco-50">
-        <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 md:py-20">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-primary shadow-sm sm:px-5">
             <img
               src="/carrito-verde.svg"
               alt=""
@@ -65,26 +60,26 @@ function Carrito() {
             Tu compra
           </span>
 
-          <h1 className="mb-5 font-coiny text-4xl text-eco-900 md:text-6xl">
+          <h1 className="mb-5 font-coiny text-4xl text-eco-900 sm:text-5xl md:text-6xl">
             Mi carrito
           </h1>
 
-          <p className="max-w-2xl text-lg leading-relaxed text-gray-600">
+          <p className="max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
             Revisá tus productos antes de confirmar tu compra.
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-14">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
         {productos.length === 0 ? (
-          <div className="py-16 text-center">
+          <div className="py-12 text-center sm:py-16">
             <img
               src="/carrito-verde.svg"
               alt="Carrito de compras vacío"
               className="mx-auto mb-6 h-20 w-20 object-contain"
             />
 
-            <h2 className="mb-4 font-coiny text-3xl text-eco-900">
+            <h2 className="mb-4 font-coiny text-2xl text-eco-900 sm:text-3xl">
               Tu carrito está vacío
             </h2>
 
@@ -98,13 +93,13 @@ function Carrito() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="space-y-5 lg:col-span-2">
+            <div className="min-w-0 space-y-5 lg:col-span-2">
               {productos.map((producto) => (
                 <article
                   key={String(producto.id)}
-                  className="rounded-2xl border border-eco-100 bg-white p-5 shadow-sm"
+                  className="min-w-0 rounded-2xl border border-eco-100 bg-white p-4 shadow-sm sm:p-5"
                 >
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
                     <div className="flex h-28 w-full shrink-0 items-center justify-center rounded-xl bg-eco-50 sm:w-28">
                       <span
                         className="text-5xl"
@@ -115,8 +110,8 @@ function Carrito() {
                       </span>
                     </div>
 
-                    <div className="flex-1">
-                      <h2 className="font-coiny text-2xl text-eco-900">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="break-words font-coiny text-xl text-eco-900 sm:text-2xl">
                         {producto.nombre || producto.name}
                       </h2>
 
@@ -128,11 +123,11 @@ function Carrito() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
                         onClick={() => disminuirCantidad(producto)}
-                        className="h-10 w-10 rounded-xl border-2 border-primary text-xl font-bold text-primary transition-colors hover:bg-eco-50"
+                        className="h-10 w-10 shrink-0 rounded-xl border-2 border-primary text-xl font-bold text-primary transition-colors hover:bg-eco-50"
                         aria-label={`Disminuir cantidad de ${
                           producto.nombre || producto.name
                         }`}
@@ -147,7 +142,7 @@ function Carrito() {
                       <button
                         type="button"
                         onClick={() => aumentarCantidad(producto)}
-                        className="h-10 w-10 rounded-xl bg-primary text-xl font-bold text-white transition-colors hover:bg-eco-700"
+                        className="h-10 w-10 shrink-0 rounded-xl bg-primary text-xl font-bold text-white transition-colors hover:bg-eco-700"
                         aria-label={`Aumentar cantidad de ${
                           producto.nombre || producto.name
                         }`}
@@ -159,7 +154,7 @@ function Carrito() {
                     <button
                       type="button"
                       onClick={() => removeFromCart(producto.id)}
-                      className="font-semibold text-red-500 transition-colors hover:text-red-700"
+                      className="self-start font-semibold text-red-500 transition-colors hover:text-red-700 sm:self-auto"
                     >
                       Eliminar
                     </button>
@@ -178,13 +173,13 @@ function Carrito() {
               </div>
             </div>
 
-            <aside className="lg:col-span-1">
-              <div className="sticky top-24 rounded-2xl bg-eco-50 p-6">
+            <aside className="min-w-0 lg:col-span-1">
+              <div className="rounded-2xl bg-eco-50 p-5 sm:p-6 lg:sticky lg:top-24">
                 <h2 className="mb-6 font-coiny text-2xl text-eco-900">
                   Resumen
                 </h2>
 
-                <div className="mb-3 flex justify-between text-gray-600">
+                <div className="mb-3 flex justify-between gap-3 text-gray-600">
                   <span>Productos</span>
                   <span>{cantidadTotal}</span>
                 </div>
@@ -195,7 +190,7 @@ function Carrito() {
                       Total
                     </span>
 
-                    <span className="font-coiny text-2xl text-primary">
+                    <span className="font-coiny text-xl text-primary sm:text-2xl">
                       ${formatoPrecio(totalCalculado)}
                     </span>
                   </div>

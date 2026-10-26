@@ -1,10 +1,46 @@
 
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RestaurantCard from "../components/RestaurantCard";
 
 const API_URL = "http://localhost:3000/api/v1";
+
+const IMAGENES_RESTAURANTES = {
+  hamburguesa:
+    "/imagenes/restaurantes/Ecobite_Foto_restaurantes_Hamburguesa-optimized.webp",
+  pizza:
+    "/imagenes/restaurantes/Ecobite_Foto_restaurantes_Pizza-optimized.webp",
+  sushi:
+    "/imagenes/restaurantes/Ecobite_Foto_restaurantes_sushi-optimized.webp",
+};
+
+function obtenerImagenRestaurante(nombre = "") {
+  const nombreNormalizado = nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+  if (
+    nombreNormalizado.includes("verde") ||
+    nombreNormalizado.includes("sabor")
+  ) {
+    return IMAGENES_RESTAURANTES.hamburguesa;
+  }
+
+  if (
+    nombreNormalizado.includes("ecobistro") ||
+    nombreNormalizado.includes("organico")
+  ) {
+    return IMAGENES_RESTAURANTES.pizza;
+  }
+
+  if (nombreNormalizado.includes("sushi")) {
+    return IMAGENES_RESTAURANTES.sushi;
+  }
+
+  return "";
+}
 
 function Restaurantes() {
   const navigate = useNavigate();
@@ -35,7 +71,7 @@ function Restaurantes() {
           );
         }
 
-        // fechaDesactivacion null significa que está activo.
+        // fechaDesactivacion null significa que el restaurante está activo.
         const activos = data.filter(
           (restaurante) =>
             restaurante.fechaDesactivacion == null
@@ -113,7 +149,9 @@ function Restaurantes() {
 
         {!cargando && !error && restaurantes.length === 0 && (
           <div className="rounded-2xl bg-eco-50 px-6 py-12 text-center">
-            <p className="text-4xl" aria-hidden="true">🌿</p>
+            <p className="text-4xl" aria-hidden="true">
+              🌿
+            </p>
 
             <h3 className="mt-4 font-coiny text-2xl text-eco-900">
               Todavía no hay restaurantes disponibles
@@ -147,7 +185,9 @@ function Restaurantes() {
                         ? "Comprometido con el uso de envases biodegradables."
                         : "Conocé las opciones disponibles de este restaurante."
                     }
-                    image=""
+                    image={obtenerImagenRestaurante(
+                      restaurante.nombreComercial
+                    )}
                     badges={
                       restaurante.utilizaEnvasesBiodegradables
                         ? ["Envases biodegradables"]

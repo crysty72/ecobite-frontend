@@ -1,10 +1,27 @@
 
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 const API_URL = "http://localhost:3000/api/v1";
+
+function Spinner({ label = "Cargando..." }) {
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="inline-flex items-center gap-2"
+    >
+      <span
+        aria-hidden="true"
+        className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent"
+      />
+      <span>{label}</span>
+    </span>
+  );
+}
 
 function Checkout() {
   const navigate = useNavigate();
@@ -17,6 +34,9 @@ function Checkout() {
   } = useAuth();
 
   const { carrito, clearCart, total } = useCart();
+
+  // Evita envíos duplicados incluso antes del siguiente render de React.
+  const envioEnCurso = useRef(false);
 
   const [direcciones, setDirecciones] = useState([]);
   const [transportes, setTransportes] = useState([]);
@@ -281,11 +301,13 @@ function Checkout() {
 
   async function confirmarPedido(event) {
     event.preventDefault();
+
+    // Bloqueo inmediato para evitar dobles clics.
+    if (envioEnCurso.current) return;
+
     setError("");
     setAvisoImpacto("");
     setImpacto(null);
-
-    if (enviando) return;
 
     if (!estaAutenticado || !usuario?.id || !token) {
       setError("Iniciá sesión para realizar tu pedido.");
@@ -383,6 +405,8 @@ function Checkout() {
       cantidad: Number(producto.cantidad),
     }));
 
+    // Se bloquea antes de iniciar la petición.
+    envioEnCurso.current = true;
     setEnviando(true);
 
     try {
@@ -424,8 +448,7 @@ function Checkout() {
         );
       }
 
-      // El pedido ya fue creado correctamente.
-      // No volver a enviar POST /pedidos para consultar el impacto.
+      // El pedido ya se creó. No volver a enviar el POST.
       setPedidoCreado(datosPedido);
       clearCart();
 
@@ -461,13 +484,16 @@ function Checkout() {
         err.message || "Ocurrió un error al crear el pedido."
       );
     } finally {
+      envioEnCurso.current = false;
       setEnviando(false);
     }
   }
 
   if (cargandoSesion) {
     return (
-      <p className="p-6">Verificando tu sesión...</p>
+      <main className="p-6">
+        <Spinner label="Verificando tu sesión..." />
+      </main>
     );
   }
 
@@ -498,8 +524,8 @@ function Checkout() {
     const kgTotal = impacto?.totalCo2AhorradoKg;
 
     return (
-      <main className="mx-auto max-w-2xl p-6">
-        <section className="rounded-2xl border border-green-200 bg-white p-6 shadow-sm">
+      <main className="mx-auto max-w-2xl p-4 sm:p-6">
+        <section className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm sm:p-6">
           <h1 className="mb-3 text-2xl font-bold text-green-700">
             ¡Pedido creado correctamente!
           </h1>
@@ -577,6 +603,7 @@ function Checkout() {
           {avisoImpacto && (
             <p
               role="status"
+              aria-live="polite"
               className="mb-4 text-amber-700"
             >
               {avisoImpacto}
@@ -606,14 +633,15 @@ function Checkout() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-6 text-3xl font-bold">
+    <main className="mx-auto max-w-3xl p-4 sm:p-6">
+      <h1 className="mb-6 text-2xl font-bold sm:text-3xl">
         Finalizar compra
       </h1>
 
       {error && (
         <div
           role="alert"
+          aria-live="assertive"
           className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
         >
           {error}
@@ -633,7 +661,7 @@ function Checkout() {
         </section>
       ) : (
         <>
-          <section className="mb-6 rounded-xl border p-5">
+          <section className="mb-6 rounded-xl border p-4 sm:p-5">
             <h2 className="mb-4 text-xl font-semibold">
               Resumen del pedido
             </h2>
@@ -642,7 +670,7 @@ function Checkout() {
               {carrito.map((producto) => (
                 <li
                   key={producto.id}
-                  className="flex justify-between gap-4"
+                  className="flex flex-col justify-between gap-1 border-b border-gray-100 pb-3 sm:flex-row sm:gap-4"
                 >
                   <span>
                     {producto.nombre || producto.name} ×{" "}
@@ -652,8 +680,9 @@ function Checkout() {
                   <span className="font-medium">
                     $
                     {(
-                      Number(producto.precio || 0) *
-                      Number(producto.cantidad || 0)
+                      Number(
+                        producto.precio ?? producto.price ?? 0
+                      ) * Number(producto.cantidad || 0)
                     ).toLocaleString("es-AR")}
                   </span>
                 </li>
@@ -666,15 +695,15 @@ function Checkout() {
           </section>
 
           {cargandoDatos ? (
-            <p role="status">
-              Cargando direcciones y medios de transporte...
-            </p>
+            <div className="rounded-xl border p-4 sm:p-5">
+              <Spinner label="Cargando direcciones y medios de transporte..." />
+            </div>
           ) : (
             <form
               onSubmit={confirmarPedido}
               className="space-y-5"
             >
-              <section className="rounded-xl border p-5">
+              <section className="rounded-xl border p-4 sm:p-5">
                 <h2 className="mb-4 text-xl font-semibold">
                   Datos de entrega
                 </h2>
@@ -693,6 +722,7 @@ function Checkout() {
                     setDireccionId(event.target.value)
                   }
                   required
+                  disabled={enviando}
                   className="mb-4 w-full rounded-lg border p-3"
                 >
                   <option value="">
@@ -726,12 +756,9 @@ function Checkout() {
                 </label>
 
                 {cargandoZonas ? (
-                  <p
-                    role="status"
-                    className="mb-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600"
-                  >
-                    Cargando zonas de entrega...
-                  </p>
+                  <div className="mb-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+                    <Spinner label="Cargando zonas de entrega..." />
+                  </div>
                 ) : errorZonas ? (
                   <div
                     role="alert"
@@ -743,10 +770,11 @@ function Checkout() {
 
                     <button
                       type="button"
+                      disabled={enviando}
                       onClick={() =>
                         setReintentoZonas((valor) => valor + 1)
                       }
-                      className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                      className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                     >
                       Reintentar carga de zonas
                     </button>
@@ -761,10 +789,11 @@ function Checkout() {
 
                     <button
                       type="button"
+                      disabled={enviando}
                       onClick={() =>
                         setReintentoZonas((valor) => valor + 1)
                       }
-                      className="rounded-lg border border-amber-600 px-4 py-2 font-semibold text-amber-800 hover:bg-amber-100"
+                      className="rounded-lg border border-amber-600 px-4 py-2 font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
                     >
                       Actualizar zonas
                     </button>
@@ -778,6 +807,7 @@ function Checkout() {
                         setZonaId(event.target.value)
                       }
                       required
+                      disabled={enviando}
                       className="mb-2 w-full rounded-lg border p-3"
                     >
                       <option value="">
@@ -805,7 +835,7 @@ function Checkout() {
                       </h3>
 
                       {zonaSeleccionada ? (
-                        <div className="space-y-2 text-sm text-gray-700">
+                        <div className="space-y-2 break-words text-sm text-gray-700">
                           <p>
                             <span className="font-medium">
                               Zona:
@@ -861,6 +891,7 @@ function Checkout() {
                     setTransporteId(event.target.value)
                   }
                   required
+                  disabled={enviando}
                   className="mb-4 w-full rounded-lg border p-3"
                 >
                   <option value="">
@@ -898,6 +929,7 @@ function Checkout() {
                   }
                   placeholder="Ingresá la distancia en kilómetros"
                   required
+                  disabled={enviando}
                   className="w-full rounded-lg border p-3"
                 />
 
@@ -919,11 +951,13 @@ function Checkout() {
                   transportes.length === 0 ||
                   zonas.length === 0
                 }
-                className="w-full rounded-lg bg-green-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {enviando
-                  ? "Creando pedido..."
-                  : "Confirmar pedido"}
+                {enviando ? (
+                  <Spinner label="Creando pedido..." />
+                ) : (
+                  "Confirmar pedido"
+                )}
               </button>
             </form>
           )}
