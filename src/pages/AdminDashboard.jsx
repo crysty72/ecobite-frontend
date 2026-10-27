@@ -577,9 +577,15 @@ function AdminDashboard() {
 
   const totalPedidos = statsDashboard?.totalOrders ?? pedidos.length;
 
-  const totalCO2 =
-    statsDashboard?.totalCo2Saved ??
-    kpisAmbientales?.totalCo2AhorradoKg;
+// eslint-disable-next-line no-unused-vars
+const ticketPromedio =
+  statsDashboard && statsDashboard.totalOrders > 0
+    ? statsDashboard.totalRevenue / statsDashboard.totalOrders
+    : 0;
+
+const totalCO2 =
+  statsDashboard?.totalCo2Saved ??
+  kpisAmbientales?.totalCo2AhorradoKg;
 
   const errorRecaudacion =
     errorStats && !statsDashboard && errorPedidos && pedidos.length === 0
@@ -801,6 +807,15 @@ function AdminDashboard() {
                 cargando={cargandoPedidos || cargandoStats}
                 error={errorPedidos}
               />
+              <TarjetaMetrica
+  titulo="Ticket promedio por pedido"
+  valor={formatearMoneda(ticketPromedio)}
+  descripcion="Promedio de todos los pedidos registrados, incluidos los pendientes"
+  icono="dinero"
+  tono="crema"
+  cargando={cargandoStats}
+  error={errorStats}
+/>
             </div>
           </section>
 
