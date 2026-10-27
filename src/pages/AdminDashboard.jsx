@@ -1,7 +1,17 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import iconoBicicleta from "../assets/iconos-ecobite/bicicleta_verde.svg";
+import iconoBicicletaBlanco from "../assets/iconos-ecobite/bicicleta_blanco.svg";
+import iconoRestaurante from "../assets/iconos-ecobite/restaurante_verde.svg";
+import iconoRestauranteBlanco from "../assets/iconos-ecobite/restaurante_blanco.svg";
+import iconoProducto from "../assets/iconos-ecobite/comida_verde.svg";
+import iconoProductoBlanco from "../assets/iconos-ecobite/comida_blanco.svg";
+import iconoImpacto from "../assets/iconos-ecobite/impacto_ambiental_verde.svg";
+import iconoImpactoBlanco from "../assets/iconos-ecobite/impacto_ambiental_blanco.svg";
+import iconoCo2 from "../assets/iconos-ecobite/co2_verde.svg";
+import iconoCo2Blanco from "../assets/iconos-ecobite/co2_blanco.svg";
+import iconoPackagingBlanco from "../assets/iconos-ecobite/packaging_blanco.svg";
 
 const API_URL = "http://localhost:3000/api/v1";
 
@@ -66,11 +76,33 @@ const esRestauranteActivo = (restaurante) =>
     normalizarEstado(restaurante.estadoNombre ?? restaurante.estado)
   );
 
-function Icono({ tipo, className = "h-6 w-6" }) {
+// Los íconos oficiales se cargan desde los SVG de Diseño Gráfico.
+// Los íconos sin equivalente directo conservan sus trazados originales.
+function Icono({ tipo, className = "h-6 w-6", variante = "verde" }) {
   if (tipo === "carrito") {
     return (
       <img
         src="/carrito-verde.svg"
+        alt=""
+        aria-hidden="true"
+        className={className}
+      />
+    );
+  }
+
+  const iconosOficiales = {
+    hoja: variante === "blanco" ? iconoImpactoBlanco : iconoImpacto,
+    co2: variante === "blanco" ? iconoCo2Blanco : iconoCo2,
+    bicicleta: variante === "blanco" ? iconoBicicletaBlanco : iconoBicicleta,
+    restaurante: variante === "blanco" ? iconoRestauranteBlanco : iconoRestaurante,
+    producto: variante === "blanco" ? iconoProductoBlanco : iconoProducto,
+    packaging: iconoPackagingBlanco,
+  };
+
+  if (iconosOficiales[tipo]) {
+    return (
+      <img
+        src={iconosOficiales[tipo]}
         alt=""
         aria-hidden="true"
         className={className}
@@ -90,12 +122,6 @@ function Icono({ tipo, className = "h-6 w-6" }) {
   };
 
   const dibujos = {
-    hoja: (
-      <>
-        <path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 8-8 8-16Z" />
-        <path d="M4 21c3-5 7-8 12-11" />
-      </>
-    ),
     dinero: (
       <>
         <rect x="3" y="6" width="18" height="13" rx="2" />
@@ -106,24 +132,6 @@ function Icono({ tipo, className = "h-6 w-6" }) {
       <>
         <path d="M4 7h16l-1 13H5L4 7Z" />
         <path d="M9 9V5a3 3 0 0 1 6 0v4" />
-      </>
-    ),
-    bicicleta: (
-      <>
-        <circle cx="5" cy="17" r="3" />
-        <circle cx="19" cy="17" r="3" />
-        <path d="m5 17 4-7 4 7H5Zm4-7h4l3 7m-5-10h3" />
-      </>
-    ),
-    restaurante: (
-      <>
-        <path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16M3 21h18M8 7h2m4 0h2M8 11h2m4 0h2M10 21v-5h4v5" />
-      </>
-    ),
-    producto: (
-      <>
-        <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
-        <path d="M3.5 12 12 16.5l8.5-4.5M3.5 16.5 12 21l8.5-4.5" />
       </>
     ),
     flecha: <path d="M5 12h14m-6-6 6 6-6 6" />,
@@ -137,7 +145,7 @@ function Icono({ tipo, className = "h-6 w-6" }) {
     ),
   };
 
-  return <svg {...props}>{dibujos[tipo] || dibujos.hoja}</svg>;
+  return <svg {...props}>{dibujos[tipo] || dibujos.dashboard}</svg>;
 }
 
 function TarjetaMetrica({
@@ -193,7 +201,7 @@ function TarjetaMetrica({
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tonos[tono]}`}
         >
-          <Icono tipo={icono} />
+          <Icono tipo={icono} variante={tono === "oscuro" ? "blanco" : "verde"} />
         </div>
       </div>
     </article>
@@ -584,7 +592,7 @@ function AdminDashboard() {
       : "";
 
   return (
-    <div className="min-h-screen bg-[#f5f6ef] text-[#26392a]">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f5f6ef] text-[#26392a]">
       <div className="flex min-h-screen flex-col lg:flex-row">
         <aside className="flex w-full shrink-0 flex-col bg-[#20382a] p-5 text-white lg:min-h-screen lg:w-64 lg:p-6">
           <Link
@@ -629,7 +637,7 @@ function AdminDashboard() {
                   to={acceso.ruta}
                   className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-[#e0e9dc] transition hover:bg-white/10"
                 >
-                  <Icono tipo={acceso.icono} className="h-5 w-5" />
+                  <Icono tipo={acceso.icono} className="h-5 w-5" variante="blanco" />
                   {acceso.titulo}
                 </Link>
               ))}
@@ -650,7 +658,7 @@ function AdminDashboard() {
             </p>
 
             <div className="mt-4 flex items-center gap-2 text-xs text-[#c2d0bc]">
-              <Icono tipo="bicicleta" className="h-5 w-5" />
+              <Icono tipo="bicicleta" className="h-5 w-5" variante="blanco" />
               Menos impacto, más futuro.
             </div>
           </div>
@@ -765,7 +773,7 @@ function AdminDashboard() {
                 titulo="CO₂ ahorrado"
                 valor={formatearKg(totalCO2)}
                 descripcion="Impacto ambiental registrado por la plataforma"
-                icono="hoja"
+                icono="co2"
                 tono="oscuro"
                 destacada
                 cargando={cargandoStats || cargandoImpacto}
@@ -970,7 +978,7 @@ function AdminDashboard() {
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-3">
-                    <Icono tipo="bicicleta" className="h-6 w-6 text-[#d7f36b]" />
+                    <Icono tipo="bicicleta" className="h-6 w-6" variante="blanco" />
                     <p className="text-sm font-semibold">Transporte</p>
                   </div>
 
@@ -990,7 +998,7 @@ function AdminDashboard() {
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="flex items-center gap-3">
-                    <Icono tipo="producto" className="h-6 w-6 text-[#d7f36b]" />
+                    <Icono tipo="packaging" className="h-6 w-6" variante="blanco" />
                     <p className="text-sm font-semibold">Envases y empaques</p>
                   </div>
 
