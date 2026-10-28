@@ -8,7 +8,9 @@ function Navbar() {
   const { usuario, estaAutenticado, logout } = useAuth();
 
   const [cantidadCarrito, setCantidadCarrito] = useState(0);
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
+  // Actualizar cantidad de productos del carrito
   const actualizarCarrito = () => {
     const carritoGuardado = localStorage.getItem("carrito");
 
@@ -48,9 +50,19 @@ function Navbar() {
     };
   }, []);
 
+  // Cerrar menú móvil
+  const cerrarMenu = () => {
+    setMenuAbierto(false);
+  };
+
+  // Cerrar sesión
   const handleLogout = () => {
     logout();
+    cerrarMenu();
   };
+
+  const claseEnlace =
+    "rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary";
 
   return (
     <nav
@@ -58,10 +70,13 @@ function Navbar() {
       aria-label="Navegación principal"
     >
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+        <div className="flex items-center justify-between gap-4">
+
           {/* LOGO */}
           <Link
             to="/"
+            onClick={cerrarMenu}
             className="group flex w-fit shrink-0 items-center"
             aria-label="EcoBite - Inicio"
           >
@@ -72,40 +87,64 @@ function Navbar() {
             />
           </Link>
 
+          {/* BOTÓN HAMBURGUESA - SOLO MÓVIL */}
+          <button
+            type="button"
+            onClick={() => setMenuAbierto((anterior) => !anterior)}
+            className="rounded-lg border border-eco-100 p-2 text-2xl text-primary transition-colors hover:bg-eco-50 md:hidden"
+            aria-label={menuAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuAbierto}
+            aria-controls="menu-principal"
+          >
+            {menuAbierto ? "✕" : "☰"}
+          </button>
+
           {/* NAVEGACIÓN */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:justify-end md:gap-x-5">
+          <div
+            id="menu-principal"
+            className={`${
+              menuAbierto ? "flex" : "hidden"
+            } absolute left-0 right-0 top-full flex-col items-start gap-3 border-b border-eco-100 bg-white px-6 py-4 shadow-md md:static md:flex md:flex-row md:flex-wrap md:items-center md:justify-end md:gap-x-5 md:border-0 md:bg-transparent md:px-0 md:py-0 md:shadow-none`}
+          >
+
             <Link
               to="/"
-              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              onClick={cerrarMenu}
+              className={claseEnlace}
             >
               Inicio
             </Link>
 
             <Link
               to="/productos"
-              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              onClick={cerrarMenu}
+              className={claseEnlace}
             >
               Productos
             </Link>
 
             <Link
               to="/restaurantes"
-              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              onClick={cerrarMenu}
+              className={claseEnlace}
             >
               Restaurantes
             </Link>
 
-            {/* NUEVO ENLACE: IMPACTO AMBIENTAL */}
+            {/* IMPACTO AMBIENTAL */}
             <Link
               to="/co2"
-              className="rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              onClick={cerrarMenu}
+              className={claseEnlace}
             >
               🌱 Impacto ambiental
             </Link>
 
+            {/* CARRITO */}
             <Link
               to="/carrito"
-              className="relative rounded-lg px-2 py-1 font-semibold text-gray-600 transition-colors hover:text-primary"
+              onClick={cerrarMenu}
+              className={`relative ${claseEnlace}`}
               aria-label={`Carrito, ${cantidadCarrito} productos`}
             >
               <span aria-hidden="true">🛒</span> Carrito
@@ -120,6 +159,7 @@ function Navbar() {
             {/* USUARIO AUTENTICADO */}
             {estaAutenticado ? (
               <div className="flex flex-wrap items-center gap-3">
+
                 <span className="font-semibold text-gray-700">
                   👋 Hola, {usuario?.nombre || "usuario"}
                 </span>
@@ -131,15 +171,18 @@ function Navbar() {
                 >
                   Cerrar sesión
                 </button>
+
               </div>
             ) : (
               <Link
                 to="/login"
+                onClick={cerrarMenu}
                 className="rounded-xl bg-primary px-5 py-2.5 font-bold text-white shadow-sm transition-colors hover:bg-eco-700"
               >
                 Iniciar sesión
               </Link>
             )}
+
           </div>
         </div>
       </div>

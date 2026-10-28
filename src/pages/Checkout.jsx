@@ -243,7 +243,7 @@ function Checkout() {
           setZonaId("");
           setErrorZonas(
             err.message ||
-              "No se pudieron cargar las zonas de entrega."
+              "Estamos actualizando las zonas de reparto sustentable. Aguardá unos segundos que ya cargan."
           );
         }
       } finally {
@@ -310,7 +310,9 @@ function Checkout() {
     setImpacto(null);
 
     if (!estaAutenticado || !usuario?.id || !token) {
-      setError("Iniciá sesión para realizar tu pedido.");
+      setError(
+  "Iniciá sesión para completar tu pedido y registrar tu ahorro de CO2 en tu perfil."
+);
       return;
     }
 
@@ -319,12 +321,12 @@ function Checkout() {
       return;
     }
 
-    if (restaurantes.length !== 1) {
-      setError(
-        "Todos los productos del pedido deben pertenecer a un único restaurante. Revisá tu carrito."
-      );
-      return;
-    }
+   if (restaurantes.length !== 1) {
+  setError(
+    "Para garantizar envíos de cero emisiones en bicicleta y que la comida llegue caliente, cada pedido debe ser de un solo local. Podés completar este pedido y luego pedir en el otro restaurante."
+  );
+  return;
+}
 
     if (cargandoDatos || cargandoZonas) {
       setError(
@@ -335,7 +337,7 @@ function Checkout() {
 
     if (errorZonas) {
       setError(
-        "No se pueden confirmar pedidos hasta que se carguen correctamente las zonas."
+        "Estamos actualizando las zonas de reparto sustentable. Aguardá unos segundos que ya cargan."
       );
       return;
     }
@@ -438,14 +440,18 @@ function Checkout() {
           respuesta: datosPedido,
         });
 
-        const mensaje = Array.isArray(datosPedido.message)
-          ? datosPedido.message.join(" ")
-          : datosPedido.message;
+      const mensaje = Array.isArray(datosPedido.message)
+  ? datosPedido.message.join(" ")
+  : datosPedido.message;
 
-        throw new Error(
-          mensaje ||
-            `No se pudo crear el pedido (HTTP ${respuesta.status}).`
-        );
+console.error("EcoBite - Error al crear pedido:", {
+  estado: respuesta.status,
+  mensaje,
+});
+
+throw new Error(
+  "Tuvimos un pequeño tropiezo al enviar tu orden a la cocina. Tu canasta sigue guardada: por favor probá apretar 'Confirmar pedido' una vez más."
+);
       }
 
       // El pedido ya se creó. No volver a enviar el POST.
@@ -479,20 +485,22 @@ function Checkout() {
           "El pedido se creó correctamente, pero la respuesta no incluyó su identificador."
         );
       }
-    } catch (err) {
-      setError(
-        err.message || "Ocurrió un error al crear el pedido."
-      );
-    } finally {
-      envioEnCurso.current = false;
-      setEnviando(false);
-    }
+   } catch (err) {
+  console.error("EcoBite - Error al confirmar el pedido:", err);
+
+  setError(
+    "Tuvimos un pequeño tropiezo al enviar tu orden a la cocina. Tu canasta sigue guardada: por favor probá apretar 'Confirmar pedido' una vez más."
+  );
+} finally {
+  envioEnCurso.current = false;
+  setEnviando(false);
+}
   }
 
   if (cargandoSesion) {
     return (
       <main className="p-6">
-        <Spinner label="Verificando tu sesión..." />
+        <Spinner label="Preparando tu pedido sustentable..." />
       </main>
     );
   }
@@ -505,7 +513,7 @@ function Checkout() {
         </h1>
 
         <p className="mb-4">
-          Necesitás iniciar sesión para confirmar tu pedido.
+         Iniciá sesión para completar tu pedido y registrar tu ahorro de CO2 en tu perfil.
         </p>
 
         <Link
@@ -527,9 +535,12 @@ function Checkout() {
       <main className="mx-auto max-w-2xl p-4 sm:p-6">
         <section className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm sm:p-6">
           <h1 className="mb-3 text-2xl font-bold text-green-700">
-            ¡Pedido creado correctamente!
+            ¡Tu pedido está en marcha y el planeta te lo agradece!
           </h1>
-
+<p className="mb-4 text-gray-600">
+  Tu comida ya se está preparando en envase biodegradable y un
+  repartidor en transporte limpio la llevará a tu puerta.
+</p>
           {pedidoCreado.id != null && (
             <p className="mb-2">
               Número de pedido:{" "}
@@ -555,7 +566,17 @@ function Checkout() {
                 "Zona seleccionada"}
             </strong>
           </p>
+{kgTotal != null && Number(kgTotal) > 0 && (
+  <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm font-medium text-green-800">
+    🌱 ¡Gracias por elegir EcoBite!
+    Acabás de ahorrar {Number(kgTotal).toFixed(4)} kg de CO₂
+    con este pedido.
+  </p>
+)}
 
+<p className="mb-4 text-sm text-gray-600">
+  Podés seguir el estado de tu pedido desde tu cuenta.
+</p>
           {impacto && (
             <section className="mb-5 rounded-xl bg-green-50 p-4">
               <h2 className="mb-3 text-lg font-bold">
@@ -757,7 +778,7 @@ function Checkout() {
 
                 {cargandoZonas ? (
                   <div className="mb-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
-                    <Spinner label="Cargando zonas de entrega..." />
+                    <Spinner label="Calculando el impacto ambiental de tu compra..." />
                   </div>
                 ) : errorZonas ? (
                   <div
@@ -954,7 +975,7 @@ function Checkout() {
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviando ? (
-                  <Spinner label="Creando pedido..." />
+                  <Spinner label="Conectando con la cocina del restaurante..." />
                 ) : (
                   "Confirmar pedido"
                 )}

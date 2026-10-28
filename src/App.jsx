@@ -15,8 +15,9 @@ import Carrito from './pages/Carrito'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
 import Checkout from './pages/Checkout'
-import Confirmacion from './pages/Confirmacion'
+
 import AdminDashboard from './pages/AdminDashboard'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -47,11 +48,19 @@ function App() {
             </Route>
 
             {/* Rutas que requieren sesión */}
-            <Route element={<RutaProtegida />}>
-              <Route path="/carrito" element={<Carrito />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/confirmacion" element={<Confirmacion />} />
-            </Route>
+           {/* Rutas que requieren sesión */}
+<Route element={<RutaProtegida />}>
+  <Route path="/carrito" element={<Carrito />} />
+  <Route path="/checkout" element={<Checkout />} />
+</Route>
+
+{/* Evitar acceder a una confirmación sin pedido */}
+<Route
+  path="/confirmacion"
+  element={<Navigate to="/carrito" replace />}
+/>
+{/* Página 404 para rutas inexistentes */}
+<Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
       </CartProvider>

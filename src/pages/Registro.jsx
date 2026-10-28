@@ -1,6 +1,6 @@
 
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -21,17 +21,33 @@ function Registro() {
 
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
-
+  const [exito, setExito] = useState("");
+  
+const emailRegistrado = useRef(false);
+const botonRegistrado = useRef(false);
+const envioEnCurso = useRef(false);
+const registroCompletado = useRef(false);
+const temporizadorRedireccion = useRef(null);
   // Evento 1: visita a la pantalla de registro.
   useEffect(() => {
     registrarEvento("vista_pantalla_registro");
   }, []);
+  useEffect(() => {
+  return () => {
+    if (temporizadorRedireccion.current !== null) {
+      clearTimeout(temporizadorRedireccion.current);
+    }
+  };
+}, []);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    setError("");
-    setCargando(true);
+  if (envioEnCurso.current || registroCompletado.current) return;
+
+  envioEnCurso.current = true;
+  setError("");
+  setCargando(true)
 
     try {
       await registrar({
@@ -42,28 +58,39 @@ function Registro() {
         telefono,
         password,
       });
-
+registroCompletado.current = true;
       // Evento 4: registro completado correctamente.
-      registrarEvento("exito_registro_cuenta");
+registrarEvento("exito_registro_cuenta");
 
-      navigate("/restaurantes");
-    } catch (error) {
-      if (error.status === 400) {
-        setError(
-          error.message || "Los datos ingresados no son válidos."
-        );
-      } else if (error.status === 401) {
-        setError(
-          "No se pudo completar el registro. Verificá los datos ingresados."
-        );
-      } else {
-        setError(
-          "No se pudo conectar con el servidor. Verificá que el backend esté funcionando."
-        );
-      }
-    } finally {
-      setCargando(false);
-    }
+setExito(
+  "¡Cuenta creada con éxito! Ya sos parte de la comunidad EcoBite."
+);
+
+temporizadorRedireccion.current = setTimeout(() => {
+  navigate("/restaurantes", { replace: true });
+}, 2000);
+  } catch (error) {
+  if (error.status === 409) {
+    setError(
+      "Este correo electrónico ya está registrado. Iniciá sesión o utilizá otro correo."
+    );
+  } else if (error.status === 400) {
+    setError(
+      error.message || "Los datos ingresados no son válidos."
+    );
+  } else if (error.status === 401) {
+    setError(
+      "No se pudo completar el registro. Verificá los datos ingresados."
+    );
+  } else {
+    setError(
+  "No pudimos conectar con el servidor en este momento. Revisá tu conexión a internet o volvé a intentar en unos segundos."
+);
+  }
+} finally {
+  envioEnCurso.current = false;
+  setCargando(false);
+}
   };
 
   return (
@@ -138,9 +165,13 @@ function Registro() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                onClick={() =>
-                  registrarEvento("click_campo_email_registro")
-                }
+                onFocus={() => {
+  if (!emailRegistrado.current) {
+    registrarEvento("click_campo_email_registro");
+    emailRegistrado.current = true;
+  }
+}}
+                
                 placeholder="tu@email.com"
                 required
                 autoComplete="email"
@@ -191,7 +222,15 @@ function Registro() {
                 La contraseña debe tener al menos 6 caracteres.
               </p>
             </div>
-
+{exito && (
+  <div
+    role="status"
+    aria-live="polite"
+    className="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm"
+  >
+    {exito}
+  </div>
+)}
             {error && (
               <div
                 role="alert"
@@ -203,10 +242,13 @@ function Registro() {
 
             <button
               type="submit"
-              onClick={() =>
-                registrarEvento("click_boton_crear_cuenta")
-              }
-              disabled={cargando}
+             onClick={() => {
+  if (!botonRegistrado.current) {
+    registrarEvento("click_boton_crear_cuenta");
+    botonRegistrado.current = true;
+  }
+}}
+              disabled={cargando || !!exito}
               className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-eco-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {cargando ? "Registrando..." : "Crear cuenta"}

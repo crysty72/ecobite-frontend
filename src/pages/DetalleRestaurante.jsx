@@ -89,16 +89,26 @@ function DetalleRestaurante() {
     };
   }, [id]);
 
-  if (cargando) {
-    return (
-      <main className="min-h-screen bg-white px-6 py-20 text-center">
-        <p role="status" className="font-semibold text-eco-800">
+if (cargando) {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 py-20">
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex flex-col items-center gap-4"
+      >
+        <div
+          aria-hidden="true"
+          className="h-12 w-12 animate-spin rounded-full border-4 border-eco-100 border-t-primary"
+        />
+
+        <p className="text-center font-semibold text-eco-800">
           Cargando restaurante y productos...
         </p>
-      </main>
-    );
-  }
-
+      </div>
+    </main>
+  );
+}
   if (error || !restaurante) {
     return (
       <main className="min-h-screen bg-white px-6 py-20 text-center">

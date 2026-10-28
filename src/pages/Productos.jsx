@@ -76,10 +76,21 @@ function Productos() {
         </div>
 
         {cargando && (
-          <p className="text-gray-600" role="status">
-            Cargando productos...
-          </p>
-        )}
+  <div
+    role="status"
+    aria-live="polite"
+    className="flex flex-col items-center justify-center gap-4 py-12"
+  >
+    <div
+      aria-hidden="true"
+      className="h-12 w-12 animate-spin rounded-full border-4 border-eco-100 border-t-primary"
+    />
+
+    <p className="font-medium text-gray-600">
+      Cargando productos...
+    </p>
+  </div>
+)}
 
         {!cargando && error && (
           <div className="py-10 text-center">

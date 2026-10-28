@@ -29,13 +29,15 @@ function Login() {
       }
     } catch (error) {
       if (error.status === 401) {
-        setError("El correo o la contraseña son incorrectos.");
+        setError(
+  "El correo o la contraseña no coinciden. Revisá los datos e intentá de nuevo."
+);
       } else if (error.status === 400) {
         setError(error.message || "Los datos ingresados no son válidos.");
       } else {
         setError(
-          "No se pudo conectar con el servidor. Verificá que el backend esté funcionando."
-        );
+  "No pudimos conectar con el servidor en este momento. Revisá tu conexión a internet o volvé a intentar en unos segundos."
+);
       }
     } finally {
       setCargando(false);

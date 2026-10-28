@@ -80,15 +80,15 @@ function Carrito() {
             />
 
             <h2 className="mb-4 font-coiny text-2xl text-eco-900 sm:text-3xl">
-              Tu carrito está vacío
+              Tu canasta sustentable está vacía
             </h2>
 
             <p className="mb-8 text-gray-500">
-              Todavía no agregaste ningún producto.
+              Elegí tus platos favoritos de nuestros locales aliados y empezá a ahorrar CO2 desde el primer bocado.
             </p>
 
-            <Button onClick={() => navigate("/productos")}>
-              Ver productos
+            <Button onClick={() => navigate("/restaurantes")}>
+              Explorar restaurantes eco
             </Button>
           </div>
         ) : (
@@ -201,7 +201,7 @@ function Carrito() {
                     className="w-full"
                     onClick={() => navigate("/checkout")}
                   >
-                    Continuar compra
+                  Continuar con mi pedido
                   </Button>
                 </div>
               </div>

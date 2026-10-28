@@ -121,14 +121,22 @@ function Restaurantes() {
           </p>
         </div>
 
-        {cargando && (
-          <div className="py-12 text-center" role="status">
-            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-eco-200 border-t-primary" />
-            <p className="font-semibold text-eco-800">
-              Cargando restaurantes...
-            </p>
-          </div>
-        )}
+       {cargando && (
+  <div
+    className="py-12 text-center"
+    role="status"
+    aria-live="polite"
+  >
+    <div
+      aria-hidden="true"
+      className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-eco-200 border-t-primary"
+    />
+
+    <p className="font-semibold text-eco-800">
+      Cargando restaurantes...
+    </p>
+  </div>
+)}
 
         {!cargando && error && (
           <div

@@ -1,16 +1,14 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 function Confirmacion() {
   const navigate = useNavigate();
+  const { clearCart } = useCart();
 
   useEffect(() => {
-    // Limpiar el carrito después de confirmar la compra
-    localStorage.removeItem("carrito");
-
-    // Actualizar inmediatamente el contador del Navbar
-    window.dispatchEvent(new Event("carritoActualizado"));
+    // Vaciar el carrito mediante CartContext
+    clearCart();
   }, []);
 
   return (
@@ -20,7 +18,7 @@ function Confirmacion() {
           {/* Icono */}
           <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm mb-8">
             <span
-              className="text-5xl"
+              className="text-5xl text-primary"
               role="img"
               aria-label="Pedido confirmado"
             >
@@ -79,4 +77,3 @@ function Confirmacion() {
 }
 
 export default Confirmacion;
-
