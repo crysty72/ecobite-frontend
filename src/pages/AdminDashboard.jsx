@@ -13,7 +13,8 @@ import iconoCo2 from "../assets/iconos-ecobite/co2_verde.svg";
 import iconoCo2Blanco from "../assets/iconos-ecobite/co2_blanco.svg";
 import iconoPackagingBlanco from "../assets/iconos-ecobite/packaging_blanco.svg";
 
-const API_URL = "http://localhost:3000/api/v1";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 const formatearMoneda = (valor) =>
   new Intl.NumberFormat("es-AR", {

@@ -5,7 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
-const API_URL = "http://localhost:3000/api/v1";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 function Spinner({ label = "Cargando..." }) {
   return (

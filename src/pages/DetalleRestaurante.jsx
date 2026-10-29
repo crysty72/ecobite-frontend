@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DishCard from "../components/DishCard";
 
-const API_URL = "http://localhost:3000/api/v1";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 function DetalleRestaurante() {
   const { id } = useParams();
