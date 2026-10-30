@@ -578,7 +578,7 @@ function AdminDashboard() {
 
   const totalPedidos = statsDashboard?.totalOrders ?? pedidos.length;
 
-// eslint-disable-next-line no-unused-vars
+
 const ticketPromedio =
   statsDashboard && statsDashboard.totalOrders > 0
     ? statsDashboard.totalRevenue / statsDashboard.totalOrders

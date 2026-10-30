@@ -7,15 +7,16 @@ function Confirmacion() {
   const { clearCart } = useCart();
 
   useEffect(() => {
-    // Vaciar el carrito mediante CartContext
+    // Vaciar el carrito mediante CartContext.
     clearCart();
-  }, []);
+  }, [clearCart]);
 
   return (
     <main className="bg-white min-h-screen">
       <section className="bg-eco-50 min-h-[70vh] flex items-center">
         <div className="max-w-3xl mx-auto px-6 py-16 text-center">
-          {/* Icono */}
+
+          {/* Icono de confirmación */}
           <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm mb-8">
             <span
               className="text-5xl text-primary"
@@ -26,7 +27,7 @@ function Confirmacion() {
             </span>
           </div>
 
-          {/* Mensaje */}
+          {/* Mensaje principal */}
           <span className="inline-flex items-center bg-white text-primary px-5 py-2 rounded-full text-sm font-bold shadow-sm mb-5">
             🌱 Compra realizada
           </span>
@@ -52,7 +53,7 @@ function Confirmacion() {
             </p>
           </div>
 
-          {/* Botones */}
+          {/* Botones de navegación */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
             <button
               type="button"
@@ -70,6 +71,7 @@ function Confirmacion() {
               Seguir comprando
             </button>
           </div>
+
         </div>
       </section>
     </main>

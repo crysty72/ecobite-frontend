@@ -1,6 +1,6 @@
-
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -31,6 +31,7 @@ function obtenerPrecio(producto) {
 function obtenerCarritoInicial() {
   try {
     const carritoGuardado = localStorage.getItem("carrito");
+
     const carrito = carritoGuardado
       ? JSON.parse(carritoGuardado)
       : [];
@@ -57,11 +58,14 @@ function idsIguales(idA, idB) {
 export function CartProvider({ children }) {
   const [carrito, setCarrito] = useState(obtenerCarritoInicial);
 
+  // Guardar el carrito en localStorage.
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
+
     window.dispatchEvent(new Event("carritoActualizado"));
   }, [carrito]);
 
+  // Agregar productos al carrito.
   function addToCart(producto) {
     const precioNuevo = obtenerPrecio(producto);
 
@@ -95,6 +99,7 @@ export function CartProvider({ children }) {
     });
   }
 
+  // Eliminar un producto del carrito.
   function removeFromCart(productoId) {
     setCarrito((carritoActual) =>
       carritoActual.filter(
@@ -103,6 +108,7 @@ export function CartProvider({ children }) {
     );
   }
 
+  // Actualizar la cantidad de un producto.
   function updateQuantity(productoId, cantidad) {
     const nuevaCantidad = Number(cantidad);
 
@@ -120,10 +126,13 @@ export function CartProvider({ children }) {
     );
   }
 
-  function clearCart() {
+  // Vaciar el carrito.
+  // useCallback evita que la función cambie en cada renderizado.
+  const clearCart = useCallback(() => {
     setCarrito([]);
-  }
+  }, []);
 
+  // Calcular el total del carrito.
   const total = useMemo(
     () =>
       carrito.reduce(
