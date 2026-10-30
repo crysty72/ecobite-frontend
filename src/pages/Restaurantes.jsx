@@ -78,10 +78,10 @@ function Restaurantes() {
             restaurante.fechaDesactivacion == null
         );
 
-        setRestaurantes(activos);
-      } catch (err) {
+   setRestaurantes(activos);
+      } catch {
         setError(
-          err.message || "No se pudieron cargar los restaurantes."
+          "No pudimos cargar los restaurantes. Intentá nuevamente."
         );
       } finally {
         setCargando(false);
