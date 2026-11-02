@@ -1,5 +1,3 @@
-
-
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -42,6 +40,19 @@ function Checkout() {
   const [direcciones, setDirecciones] = useState([]);
   const [transportes, setTransportes] = useState([]);
   const [zonas, setZonas] = useState([]);
+
+  // Alta de direcciones. No se usa un <form> anidado dentro del checkout.
+  const guardadoDireccionEnCurso = useRef(false);
+  const [mostrarFormularioDireccion, setMostrarFormularioDireccion] = useState(false);
+  const [nuevaDireccion, setNuevaDireccion] = useState({
+    calle: "",
+    numero: "",
+    ciudad: "",
+    codigoPostal: "",
+  });
+  const [guardandoDireccion, setGuardandoDireccion] = useState(false);
+  const [errorDireccion, setErrorDireccion] = useState("");
+  const [mensajeDireccion, setMensajeDireccion] = useState("");
 
   const [direccionId, setDireccionId] = useState("");
   const [transporteId, setTransporteId] = useState("");
@@ -102,10 +113,7 @@ function Checkout() {
           respuestaDirecciones,
           respuestaTransportes,
         ] = await Promise.all([
-          fetch(
-            `${API_URL}/direcciones/usuario/${usuario.id}`,
-            opciones
-          ),
+          fetch(`${API_URL}/direcciones`, opciones),
           fetch(`${API_URL}/tipos-transporte`, opciones),
         ]);
 
@@ -197,6 +205,7 @@ function Checkout() {
           {
             headers: {
               Accept: "application/json",
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -266,6 +275,89 @@ function Checkout() {
     cargandoSesion,
     reintentoZonas,
   ]);
+
+  function actualizarCampoDireccion(event) {
+    const { name, value } = event.target;
+    setNuevaDireccion((anterior) => ({
+      ...anterior,
+      [name]: value,
+    }));
+    setErrorDireccion("");
+    setMensajeDireccion("");
+  }
+
+  async function guardarNuevaDireccion() {
+    // Bloqueo inmediato: evita registrar la misma dirección por doble clic.
+    if (guardadoDireccionEnCurso.current || enviando) return;
+
+    setErrorDireccion("");
+    setMensajeDireccion("");
+
+    if (!estaAutenticado || !token) {
+      setErrorDireccion("Iniciá sesión para registrar una dirección.");
+      return;
+    }
+
+    // El backend exige exactamente estos cuatro campos, todos string.
+    const datosDireccion = {
+      calle: nuevaDireccion.calle.trim(),
+      numero: nuevaDireccion.numero.trim(),
+      ciudad: nuevaDireccion.ciudad.trim(),
+      codigoPostal: nuevaDireccion.codigoPostal.trim(),
+    };
+
+    if (Object.values(datosDireccion).some((valor) => !valor)) {
+      setErrorDireccion("Completá todos los campos de la dirección.");
+      return;
+    }
+
+    guardadoDireccionEnCurso.current = true;
+    setGuardandoDireccion(true);
+
+    try {
+      const respuesta = await fetch(`${API_URL}/direcciones`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(datosDireccion),
+      });
+
+      const datos = await respuesta.json().catch(() => ({}));
+
+      if (!respuesta.ok) {
+        const mensaje = Array.isArray(datos.message)
+          ? datos.message.join(", ")
+          : datos.message;
+        throw new Error(mensaje || `No se pudo registrar la dirección (HTTP ${respuesta.status}).`);
+      }
+
+      if (datos.id == null) {
+        throw new Error(
+          "La API no devolvió el identificador de la dirección. Actualizá la página para verificar si se guardó antes de volver a intentarlo."
+        );
+      }
+
+      // La respuesta 201 incluye la dirección creada: no es necesario recargar.
+      setDirecciones((anteriores) => {
+        if (anteriores.some((direccion) => String(direccion.id) === String(datos.id))) {
+          return anteriores;
+        }
+        return [...anteriores, datos];
+      });
+      setDireccionId(String(datos.id));
+      setNuevaDireccion({ calle: "", numero: "", ciudad: "", codigoPostal: "" });
+      setMostrarFormularioDireccion(false);
+      setMensajeDireccion("¡Dirección guardada! Ya podés continuar con tu pedido.");
+    } catch (err) {
+      setErrorDireccion(err.message || "Ocurrió un error al guardar la dirección.");
+    } finally {
+      guardadoDireccionEnCurso.current = false;
+      setGuardandoDireccion(false);
+    }
+  }
 
   async function consultarImpactoAmbiental(pedidoId) {
     const respuesta = await fetch(
@@ -420,15 +512,13 @@ function Checkout() {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          clienteId: Number(usuario.id),
-          restauranteId: restaurantes[0],
-          direccionEntregaId: Number(direccionId),
-          tipoTransporteId: Number(transporteId),
-          zoneId: Number(zonaId),
-          distanciaKm: distancia,
-          items,
-        }),
+     body: JSON.stringify({
+  restaurantId: Number(restaurantes[0]),
+  direccionEntregaId: Number(direccionId),
+  tipoTransporteId: Number(transporteId),
+  zoneId: Number(zonaId),
+  items,
+}),
       });
 
       const datosPedido = await respuesta
@@ -765,9 +855,82 @@ throw new Error(
 
                 {direcciones.length === 0 && (
                   <p className="mb-4 text-sm text-amber-700">
-                    No tenés direcciones guardadas. Necesitás
-                    registrar una dirección antes de continuar.
+                    No tenés direcciones guardadas. Agregá una para continuar.
                   </p>
+                )}
+
+                {mensajeDireccion && (
+                  <p role="status" className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-800">
+                    {mensajeDireccion}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  aria-expanded={mostrarFormularioDireccion}
+                  aria-controls="formulario-nueva-direccion"
+                  disabled={enviando || guardandoDireccion}
+                  onClick={() => {
+                    setMostrarFormularioDireccion((anterior) => !anterior);
+                    setErrorDireccion("");
+                    setMensajeDireccion("");
+                  }}
+                  className="mb-4 rounded-lg border border-green-600 px-4 py-2 font-semibold text-green-700 hover:bg-green-50 disabled:opacity-50"
+                >
+                  {mostrarFormularioDireccion ? "Cancelar nueva dirección" : "+ Agregar dirección de entrega"}
+                </button>
+
+                {mostrarFormularioDireccion && (
+                  <div
+                    id="formulario-nueva-direccion"
+                    className="mb-5 space-y-4 rounded-xl border border-green-200 bg-green-50 p-4"
+                  >
+                    <h3 className="text-lg font-semibold text-green-800">
+                      Nueva dirección de entrega
+                    </h3>
+
+                    {[
+                      { name: "calle", label: "Calle", placeholder: "Ej.: Av. Santa Fe", autoComplete: "address-line1" },
+                      { name: "numero", label: "Número", placeholder: "Ej.: 2450", autoComplete: "off" },
+                      { name: "ciudad", label: "Ciudad", placeholder: "Ej.: CABA", autoComplete: "address-level2" },
+                      { name: "codigoPostal", label: "Código postal", placeholder: "Ej.: 1425", autoComplete: "postal-code" },
+                    ].map((campo) => (
+                      <div key={campo.name}>
+                        <label
+                          htmlFor={`nueva-direccion-${campo.name}`}
+                          className="mb-1 block text-sm font-medium"
+                        >
+                          {campo.label}
+                        </label>
+                        <input
+                          id={`nueva-direccion-${campo.name}`}
+                          name={campo.name}
+                          type="text"
+                          autoComplete={campo.autoComplete}
+                          placeholder={campo.placeholder}
+                          value={nuevaDireccion[campo.name]}
+                          onChange={actualizarCampoDireccion}
+                          disabled={guardandoDireccion || enviando}
+                          className="w-full rounded-lg border border-gray-300 bg-white p-3"
+                        />
+                      </div>
+                    ))}
+
+                    {errorDireccion && (
+                      <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                        {errorDireccion}
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={guardarNuevaDireccion}
+                      disabled={guardandoDireccion || enviando}
+                      className="flex min-h-11 w-full items-center justify-center rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {guardandoDireccion ? <Spinner label="Guardando dirección..." /> : "Guardar dirección"}
+                    </button>
+                  </div>
                 )}
 
                 <label
@@ -965,6 +1128,7 @@ throw new Error(
                 type="submit"
                 disabled={
                   enviando ||
+                  guardandoDireccion ||
                   cargandoDatos ||
                   cargandoZonas ||
                   Boolean(errorZonas) ||
