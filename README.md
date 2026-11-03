@@ -1,4 +1,3 @@
-
 <div align="center">
 
 # 🌱 EcoBite
@@ -15,75 +14,92 @@
 
 ## 🌿 Sobre el proyecto
 
-EcoBite es una plataforma web de delivery sustentable que conecta
-a los usuarios con restaurantes locales y promueve decisiones de
-consumo más responsables.
+EcoBite es una plataforma web de delivery sustentable que conecta a los usuarios con restaurantes locales y promueve decisiones de consumo más responsables.
 
-El proyecto busca facilitar la compra de alimentos y generar
-conciencia sobre el impacto ambiental de cada pedido.
+El proyecto busca facilitar la compra de alimentos y generar conciencia sobre el impacto ambiental de cada pedido.
 
-## 💻 Tecnologías utilizadas
+**EcoBite es un trabajo colaborativo:** cada área contribuyó a la planificación, el diseño, el desarrollo, la integración y las pruebas de la plataforma.
 
-- React
-- Vite
+## 💻 Tecnologías utilizadas en el frontend
+
+- React y Vite
 - JavaScript
-- Tailwind CSS
 - React Router
 - Context API
-- API REST
+- Tailwind CSS
+- API REST y autenticación JWT
 - Git y GitHub
 - Vercel
 
----
+> El documento inicial `stack.md` mencionaba Axios como tecnología prevista. Las integraciones revisadas durante el desarrollo utilizan `fetch`; por eso no se presenta Axios como dependencia confirmada.
 
 ## 🚀 Funcionalidades
 
 ### 👤 Usuarios
-- Registro de nuevos usuarios.
-- Inicio de sesión con autenticación JWT.
-- Navegación adaptada al tipo de usuario.
+
+- Registro de usuarios e inicio de sesión con autenticación JWT.
+- Navegación adaptada al rol del usuario.
 - Protección de rutas privadas.
+- **Pendiente:** recuperación de contraseñas, aún no implementada en Backend.
 
 ### 🍽️ Restaurantes y productos
-- Visualización de restaurantes disponibles.
-- Consulta de productos y sus detalles.
-- Información de los restaurantes.
-- Estados de carga, error y listas vacías.
+
+- Listado de restaurantes y productos disponibles.
+- Páginas de detalle e información de los restaurantes.
+- Mensajes para estados de carga, error y listas vacías.
 
 ### 🛒 Carrito de compras
-- Agregar productos al carrito.
-- Modificar cantidades.
-- Eliminar productos.
-- Calcular el total de la compra.
-- Conservar el carrito mediante localStorage.
 
-### 📦 Pedidos
-- Formulario para confirmar pedidos.
-- Integración con la API REST.
-- Confirmación de compra.
-- Información sobre el impacto ambiental del pedido.
+- Agregar y eliminar productos.
+- Modificar cantidades y calcular el total.
+- Conservar el carrito mediante `localStorage`.
+
+### 📦 Pedidos y direcciones
+
+- Registro y selección de direcciones de entrega.
+- Selección de opciones disponibles para la entrega.
+- Confirmación de pedidos mediante la API REST.
+- Pantalla de confirmación con número de pedido, total e impacto ambiental.
 
 ### 📊 Panel administrativo
+
 - Acceso restringido a administradores.
-- Visualización de estadísticas.
-- Consulta de pedidos recientes.
+- Visualización de estadísticas y pedidos recientes.
 - Indicadores de actividad e impacto ambiental.
 
 ### 🌎 Sustentabilidad
+
 - Calculadora de CO₂.
-- Información sobre ahorro de emisiones.
-- Promoción de restaurantes locales y consumo responsable.
+- Información sobre ahorro de emisiones asociado a pedidos.
+- Promoción del consumo local y responsable.
 
-### 📱 Diseño responsive
-- Interfaz adaptable a celulares y computadoras.
-- Navegación móvil.
-- Mensajes de error y carga para mejorar la experiencia.
+### 📱 Diseño adaptable
 
----
+- Interfaz responsive para celulares y computadoras.
+- Menú de navegación móvil.
+- Mensajes de carga y error para mejorar la experiencia de uso.
+
+## 🎨 Diseño e interfaz
+
+El proyecto incorpora recursos visuales e identidad gráfica desarrollados por el equipo de Diseño Gráfico, en coordinación con UX/UI.
+
+![Presentación gráfica de EcoBite](./src/assets/EcoBite_Instagram_post.png)
+
+### Mockups de la experiencia móvil
+
+<div align="center">
+
+<img src="./src/assets/EcoBite_Mockups_Mobile.png" alt="Tres mockups de EcoBite: inicio y restaurantes, detalle de restaurante y seguimiento del pedido con impacto ambiental" width="780" />
+
+*Diseños compartidos por el equipo de EcoBite. Créditos: UX/UI y Diseño Gráfico.*
+
+</div>
+
+Los mockups muestran una propuesta visual de la experiencia móvil. Algunas pantallas o funcionalidades pueden diferir de la versión implementada.
 
 ## ⚙️ Instalación y ejecución local
 
-### Requisitos previos
+### Requisitos
 
 - Node.js
 - npm
@@ -109,13 +125,15 @@ npm install
 
 ### 4. Configurar las variables de entorno
 
-Crear un archivo `.env` en la raíz del proyecto:
+Crear un archivo `.env` en la raíz del proyecto.
+
+Para utilizar un backend local:
 
 ```env
 VITE_API_URL=http://localhost:3000/api/v1
 ```
 
-Para conectarse al backend desplegado en Render, utilizar:
+Para conectarse al backend desplegado en Render:
 
 ```env
 VITE_API_URL=https://back-ecobyte.onrender.com/api/v1
@@ -127,67 +145,55 @@ VITE_API_URL=https://back-ecobyte.onrender.com/api/v1
 npm run dev
 ```
 
-Abrir en el navegador la dirección local indicada por Vite.
+Abrir la dirección local indicada por Vite.
 
-### 6. Generar la versión de producción
+### 6. Verificar y generar la versión de producción
 
 ```bash
+npm run lint
 npm run build
 ```
 
----
-
 ## 🌐 Despliegue
 
-El frontend está desplegado en Vercel.
+- **Aplicación web:** [EcoBite en Vercel](https://ecobite-frontend-five.vercel.app/)
+- **Repositorio:** [EcoBite Frontend en GitHub](https://github.com/crysty72/ecobite-frontend)
 
-**Aplicación web:** [Visitar EcoBite](https://ecobite-frontend-five.vercel.app/)
+El frontend está desplegado en Vercel y utiliza `VITE_API_URL` para conectarse a la API REST alojada en Render. El proyecto incluye reglas de reescritura para permitir la navegación con React Router en producción.
 
-**Repositorio:** [GitHub - EcoBite Frontend](https://github.com/crysty72/ecobite-frontend)
+> La disponibilidad de restaurantes, productos y pedidos depende de los datos cargados en el backend.
 
-El proyecto utiliza variables de entorno para configurar la conexión con la API REST y reglas de reescritura para permitir la navegación con React Router en producción.
+## 👥 Equipo de desarrollo y agradecimientos
 
-> **Nota:** La disponibilidad de restaurantes, productos y pedidos depende de los datos cargados en la base de datos del backend.
+EcoBite fue desarrollado por un equipo multidisciplinario. Reconocemos el aporte de todas las áreas involucradas:
 
----
+| Integrante o equipo | Área / contribución |
+| --- | --- |
+| **Cristina Carrizo** | Frontend: interfaz, navegación, autenticación, carrito, integración con API y despliegue. |
+| **Juan Carlos Pubill** | Project Management: coordinación y seguimiento del proyecto. |
+| **Tincho** *(nombre completo por confirmar)* | Backend: API REST, autenticación, persistencia e integración. |
+| **Micaela** *(apellido por confirmar)* | UX/UI: diseño de experiencia e interfaces. |
+| **Victoria** *(nombre completo por confirmar)* | Data Analytics: análisis de datos y métricas. |
+| **Simón** *(apellido por confirmar)* | QA: pruebas y control de calidad. |
+| **Equipo de Diseño Gráfico** *(integrantes por confirmar)* | Identidad visual, recursos gráficos e iconografía. |
 
-## 👥 Equipo de desarrollo
+> Los nombres parciales y los créditos pendientes deben verificarse con el equipo antes de dar por definitiva esta sección. Si participaron más personas, corresponde agregarlas.
 
-EcoBite es un proyecto colaborativo desarrollado por un equipo
-multidisciplinario.
+### Mi participación — Frontend Developer
 
-### Áreas de trabajo
+Como desarrolladora frontend, trabajé en:
 
-- **Frontend:** desarrollo de la interfaz, navegación, carrito,
-  autenticación e integración con la API.
-- **Backend:** desarrollo de la API REST, autenticación y base de datos.
-- **UX/UI:** diseño de interfaces y experiencia de usuario.
-- **Diseño Gráfico:** identidad visual, recursos gráficos e iconografía.
-- **Data Analytics:** análisis de datos y métricas.
-- **QA:** pruebas funcionales y control de calidad.
-- **Project Management:** coordinación y seguimiento del proyecto.
-
-### Mi participación
-
-**Cristina Carrizo — Frontend Developer**
-
-Responsabilidades:
-- Desarrollo de componentes con React.
-- Implementación de interfaces responsive con Tailwind CSS.
-- Integración del frontend con la API REST.
-- Implementación de autenticación y rutas protegidas.
-- Desarrollo del carrito y flujo de compra.
-- Integración del dashboard administrativo.
-- Pruebas, correcciones y despliegue en Vercel.
-
----
+- Componentes e interfaces con React y Tailwind CSS.
+- Navegación y rutas protegidas.
+- Integración con los servicios de Backend.
+- Carrito, direcciones y flujo de compra.
+- Panel administrativo y visualización de información.
+- Pruebas funcionales, correcciones responsive y despliegue en Vercel.
 
 ## 📄 Estado del proyecto
 
-Proyecto en etapa de integración y pruebas finales de producción.
+El frontend se encuentra **publicado en Vercel y conectado con la API de producción** alojada en Render.
 
-El frontend se encuentra desplegado en Vercel y conectado
-con el backend alojado en Render.
+Se verificaron flujos de registro e inicio de sesión, registro de direcciones y compras de prueba desde computadora y celular, con confirmación de pedidos e información sobre ahorro de CO₂.
 
-La carga de datos de prueba y la validación de los flujos
-completos se están coordinando con el equipo de Backend y QA.
+La recuperación de contraseñas quedó identificada como **mejora pendiente de Backend**. Las validaciones integrales de QA y las mejoras futuras se coordinan con el equipo.
