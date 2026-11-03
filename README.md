@@ -165,19 +165,19 @@ El frontend está desplegado en Vercel y utiliza `VITE_API_URL` para conectarse 
 
 ## 👥 Equipo de desarrollo y agradecimientos
 
-EcoBite fue desarrollado por un equipo multidisciplinario. Reconocemos el aporte de todas las áreas involucradas:
+EcoBite fue desarrollado por un equipo multidisciplinario. Reconocemos y agradecemos el trabajo de cada integrante:
 
-| Integrante o equipo | Área / contribución |
+| Integrante | Área / contribución |
 | --- | --- |
-| **Cristina Carrizo** | Frontend: interfaz, navegación, autenticación, carrito, integración con API y despliegue. |
-| **Juan Carlos Pubill** | Project Management: coordinación y seguimiento del proyecto. |
-| **Tincho** *(nombre completo por confirmar)* | Backend: API REST, autenticación, persistencia e integración. |
-| **Micaela** *(apellido por confirmar)* | UX/UI: diseño de experiencia e interfaces. |
-| **Victoria** *(nombre completo por confirmar)* | Data Analytics: análisis de datos y métricas. |
-| **Simón** *(apellido por confirmar)* | QA: pruebas y control de calidad. |
-| **Equipo de Diseño Gráfico** *(integrantes por confirmar)* | Identidad visual, recursos gráficos e iconografía. |
+| **Cristina Carrizo** | Frontend Developer: desarrollo de interfaces, navegación, autenticación, carrito, integración con API y despliegue. |
+| **Martín Beccereca** | Backend Developer: API REST, autenticación, base de datos e integración. |
+| **Juan Carlos Pubill** | Project Manager y Marketing: coordinación, seguimiento del proyecto y revisión de contenidos. |
+| **Micaela Limachi** | UX/UI: diseño de experiencia de usuario e interfaces. |
+| **Victoria Sarach** | Data Analytics: análisis de datos, métricas e indicadores ambientales. |
+| **Simón Veiga** | QA / Testing: pruebas funcionales y control de calidad. |
+| **Dani Rosales** | Diseño Gráfico: identidad visual, recursos gráficos e iconografía. |
 
-> Los nombres parciales y los créditos pendientes deben verificarse con el equipo antes de dar por definitiva esta sección. Si participaron más personas, corresponde agregarlas.
+Este proyecto fue posible gracias a la colaboración, el compromiso y los aportes de todo el equipo.
 
 ### Mi participación — Frontend Developer
 
